@@ -5,13 +5,11 @@
   <title>D&D Campaign Chat – Supabase Auth</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Supabase via CDN (ESM) -->
-  <script type="module">
-    import { createClient } from "https://unpkg.com/@supabase/supabase-js@2.48.0/dist/umd/supabase.esm.js";
-
-    // Expose createClient globally so the main script can use it
-    window._supabaseCreateClient = createClient;
-  </script>
+  <!--
+    Supabase JS v2 — UMD bundle via jsDelivr (reliable, no ESM/module race condition).
+    This exposes window.supabase.createClient as a plain global.
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
   <style>
     :root {
@@ -75,10 +73,7 @@
       margin-bottom: 16px;
     }
 
-    .grid {
-      display: grid;
-      gap: 8px;
-    }
+    .grid { display: grid; gap: 8px; }
 
     .grid-2 {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -124,32 +119,13 @@
       transition: background 0.15s ease, color 0.15s ease, transform 0.05s ease;
     }
 
-    .btn.primary {
-      background: var(--primary);
-      color: #f9f8f4;
-    }
+    .btn.primary { background: var(--primary); color: #f9f8f4; }
+    .btn.primary:hover { background: var(--primary-hover); transform: translateY(-0.5px); }
 
-    .btn.primary:hover {
-      background: var(--primary-hover);
-      transform: translateY(-0.5px);
-    }
+    .btn.secondary { background: var(--surface-2); color: var(--text-muted); }
+    .btn.secondary:hover { background: var(--surface-2); color: var(--text); transform: translateY(-0.5px); }
 
-    .btn.secondary {
-      background: var(--surface-2);
-      color: var(--text-muted);
-    }
-
-    .btn.secondary:hover {
-      background: var(--surface-2);
-      color: var(--text);
-      transform: translateY(-0.5px);
-    }
-
-    .btn[disabled] {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
+    .btn[disabled] { opacity: 0.5; cursor: not-allowed; transform: none; }
 
     .help {
       font-size: 13px;
@@ -163,38 +139,23 @@
       padding: 8px 10px;
       border-radius: 8px;
       display: none;
+      word-break: break-word;
     }
 
-    #message.ok {
-      background: #d4dfcc;
-      color: #1e3f0a;
-    }
-
-    #message.err {
-      background: #e0ced7;
-      color: #561740;
-    }
+    #message.ok  { background: #d4dfcc; color: #1e3f0a; display: block; }
+    #message.err { background: #e0ced7; color: #561740; display: block; }
 
     @media (max-width: 720px) {
-      .card {
-        margin: 16px;
-        padding: 20px 16px 16px;
-      }
-
-      .grid-2 {
-        grid-template-columns: minmax(0, 1fr);
-      }
-
-      .btn-row {
-        grid-template-columns: minmax(0, 1fr);
-      }
+      .card { margin: 16px; padding: 20px 16px 16px; }
+      .grid-2 { grid-template-columns: minmax(0, 1fr); }
+      .btn-row { grid-template-columns: minmax(0, 1fr); }
     }
   </style>
 </head>
 <body>
   <main class="card">
     <header class="card-header">
-      <div class="card-title">D&D Campaign Chat</div>
+      <div class="card-title">D&amp;D Campaign Chat</div>
       <div id="statusPill" class="status-pill">Logged out</div>
     </header>
 
@@ -208,7 +169,7 @@
         </div>
         <div>
           <label for="supabaseKey">Anon (publishable) key</label>
-          <input id="supabaseKey" type="text" placeholder="sb_publishable_..." />
+          <input id="supabaseKey" type="text" placeholder="sb_publishable_... or eyJ..." />
         </div>
       </div>
 
@@ -229,7 +190,7 @@
       </div>
 
       <p class="help">
-        Use email and password. This page talks directly to Supabase Auth; invites and admin actions are handled separately.
+        Enter your Supabase project URL and anon key, then sign in or create an account.
       </p>
 
       <div id="message"></div>
@@ -237,163 +198,157 @@
   </main>
 
   <script>
-    console.log("[DEBUG] Script loaded");
-
-    const supabaseUrlInput = document.getElementById("supabaseUrl");
-    const supabaseKeyInput = document.getElementById("supabaseKey");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const signinBtn = document.getElementById("signinBtn");
-    const signupBtn = document.getElementById("signupBtn");
-    const statusPill = document.getElementById("statusPill");
-    const messageBox = document.getElementById("message");
-
-    console.log("[DEBUG] signinBtn found?", !!signinBtn);
-    console.log("[DEBUG] signupBtn found?", !!signupBtn);
-
-    let supabase = null;
-
-    function showMessage(text, type) {
-      console.log("[DEBUG] showMessage:", type, text);
-      messageBox.textContent = text;
-      messageBox.className = "";
-      messageBox.classList.add(type === "ok" ? "ok" : "err");
-      messageBox.style.display = "block";
+    // --- Supabase client init check ---
+    // The UMD bundle exposes window.supabase (with .createClient) synchronously.
+    if (!window.supabase || typeof window.supabase.createClient !== "function") {
+      document.getElementById("message").textContent =
+        "⚠️ Supabase library failed to load. Check your internet connection and refresh.";
+      document.getElementById("message").className = "err";
     }
 
-    function setLoading(isLoading) {
-      console.log("[DEBUG] setLoading:", isLoading);
-      signinBtn.disabled = isLoading;
-      signupBtn.disabled = isLoading;
+    const $ = id => document.getElementById(id);
+    const supabaseUrlInput = $("supabaseUrl");
+    const supabaseKeyInput = $("supabaseKey");
+    const emailInput       = $("email");
+    const passwordInput    = $("password");
+    const signinBtn        = $("signinBtn");
+    const signupBtn        = $("signupBtn");
+    const statusPill       = $("statusPill");
+    const messageBox       = $("message");
+
+    let client = null;
+
+    function showMessage(text, type) {
+      messageBox.textContent = text;
+      messageBox.className = type === "ok" ? "ok" : "err";
+    }
+
+    function clearMessage() {
+      messageBox.textContent = "";
+      messageBox.className = "";
+    }
+
+    function setLoading(on) {
+      signinBtn.disabled = on;
+      signupBtn.disabled = on;
+      signinBtn.textContent = on ? "Please wait…" : "Sign in";
     }
 
     function ensureClient() {
       const url = supabaseUrlInput.value.trim();
       const key = supabaseKeyInput.value.trim();
 
-      console.log("[DEBUG] ensureClient called with url/key:", { url, keyPresent: !!key });
-
       if (!url || !key) {
-        showMessage("Please enter both Supabase URL and anon key.", "err");
+        showMessage("Enter both Supabase URL and anon key before continuing.", "err");
         return null;
       }
 
-      if (!window._supabaseCreateClient) {
-        console.error("[DEBUG] _supabaseCreateClient missing. CDN script may not have loaded.");
-        showMessage("Supabase client is not available. Check the CDN script.", "err");
+      if (!url.startsWith("https://")) {
+        showMessage("Supabase URL must start with https://", "err");
+        return null;
+      }
+
+      if (!window.supabase || typeof window.supabase.createClient !== "function") {
+        showMessage("Supabase library is not available. Refresh the page.", "err");
         return null;
       }
 
       try {
-        supabase = window._supabaseCreateClient(url, key);
-        console.log("[DEBUG] Supabase client created");
-        return supabase;
+        client = window.supabase.createClient(url, key);
+        return client;
       } catch (e) {
-        console.error("[DEBUG] Error creating Supabase client:", e);
-        showMessage("Failed to create Supabase client. Check URL and key.", "err");
+        showMessage("Could not create Supabase client: " + e.message, "err");
         return null;
       }
     }
 
     async function handleSignIn() {
-      console.log("[DEBUG] Sign in clicked");
-      const client = ensureClient();
-      if (!client) {
-        console.log("[DEBUG] ensureClient returned null (sign in)");
-        return;
-      }
+      clearMessage();
+      const sb = ensureClient();
+      if (!sb) return;
 
-      const email = emailInput.value.trim();
+      const email    = emailInput.value.trim();
       const password = passwordInput.value;
 
-      console.log("[DEBUG] Sign in email/password:", { email, hasPassword: !!password });
-
       if (!email || !password) {
-        showMessage("Enter email and password to sign in.", "err");
+        showMessage("Enter your email and password.", "err");
         return;
       }
 
       setLoading(true);
-
       try {
-        console.log("[DEBUG] Calling supabase.auth.signInWithPassword");
-        const { data, error } = await client.auth.signInWithPassword({ email, password });
-        console.log("[DEBUG] Sign in response:", { data, error });
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
         if (error) {
-          console.error("[DEBUG] Sign in error:", error);
-          showMessage("Sign in failed: " + error.message, "err");
+          showMessage("Sign-in failed: " + error.message, "err");
           statusPill.textContent = "Logged out";
           return;
         }
 
-        showMessage("Signed in successfully.", "ok");
+        showMessage("✓ Signed in as " + data.user.email, "ok");
         statusPill.textContent = "Logged in";
       } catch (e) {
-        console.error("[DEBUG] Sign in exception:", e);
-        showMessage("Unexpected error during sign in.", "err");
+        showMessage("Unexpected error: " + e.message, "err");
         statusPill.textContent = "Logged out";
       } finally {
         setLoading(false);
+        signinBtn.textContent = "Sign in";
       }
     }
 
     async function handleSignUp() {
-      console.log("[DEBUG] Create account clicked");
-      const client = ensureClient();
-      if (!client) {
-        console.log("[DEBUG] ensureClient returned null (sign up)");
+      clearMessage();
+      const sb = ensureClient();
+      if (!sb) return;
+
+      const email    = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        showMessage("Enter an email and password to create an account.", "err");
         return;
       }
 
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-
-      console.log("[DEBUG] Sign up email/password:", { email, hasPassword: !!password });
-
-      if (!email || !password) {
-        showMessage("Enter email and password to create an account.", "err");
+      if (password.length < 6) {
+        showMessage("Password must be at least 6 characters.", "err");
         return;
       }
 
       setLoading(true);
+      signupBtn.disabled = true;
+      signupBtn.textContent = "Creating…";
 
       try {
-        console.log("[DEBUG] Calling supabase.auth.signUp");
-        const { data, error } = await client.auth.signUp({ email, password });
-        console.log("[DEBUG] Sign up response:", { data, error });
+        const { data, error } = await sb.auth.signUp({ email, password });
 
         if (error) {
-          console.error("[DEBUG] Sign up error:", error);
-          showMessage("Sign up failed: " + error.message, "err");
+          showMessage("Sign-up failed: " + error.message, "err");
           statusPill.textContent = "Logged out";
           return;
         }
 
-        showMessage("Account created. Check your email if confirmation is required.", "ok");
-        statusPill.textContent = "Logged in (or pending confirmation)";
+        // data.user is present even when email confirmation is pending
+        if (data.user && data.session) {
+          showMessage("✓ Account created and signed in as " + data.user.email, "ok");
+          statusPill.textContent = "Logged in";
+        } else if (data.user) {
+          showMessage("✓ Account created for " + data.user.email + ". Check your email to confirm before signing in.", "ok");
+          statusPill.textContent = "Pending confirmation";
+        } else {
+          showMessage("Sign-up may have succeeded — check your email.", "ok");
+        }
       } catch (e) {
-        console.error("[DEBUG] Sign up exception:", e);
-        showMessage("Unexpected error during sign up.", "err");
+        showMessage("Unexpected error: " + e.message, "err");
         statusPill.textContent = "Logged out";
       } finally {
         setLoading(false);
+        signupBtn.disabled = false;
+        signupBtn.textContent = "Create account";
       }
     }
 
-    if (signinBtn) {
-      signinBtn.addEventListener("click", (event) => {
-        event.preventDefault();
-        handleSignIn();
-      });
-    }
-
-    if (signupBtn) {
-      signupBtn.addEventListener("click", (event) => {
-        event.preventDefault();
-        handleSignUp();
-      });
-    }
+    signinBtn.addEventListener("click", e => { e.preventDefault(); handleSignIn(); });
+    signupBtn.addEventListener("click", e => { e.preventDefault(); handleSignUp(); });
   </script>
 </body>
 </html>
