@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Tavern — D&D Campaign Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300..700;1,300..700&display=swap" rel="stylesheet">
+<style>
+/* === DESIGN TOKENS === */
+:root {
+  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+  --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
+  --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem;
+  --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem;
+  --radius-sm: 0.375rem; --radius-md: 0.5rem;
+  --radius-lg: 0.75rem; --radius-xl: 1rem; --radius-full: 9999px;
+  --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --font-display: 'Cinzel', 'Georgia', serif;
+  --font-body: 'Crimson Pro', 'Georgia', serif;
+}
+[data-theme="dark"] {
+  --bg: #0e0c0a;
+  --surface: #161310;
+  --surface-2: #1c1916;
+  --surface-3: #232019;
+  --border: rgba(255,220,120,0.1);
+  --border-gold: rgba(255,200,80,0.25);
+  --text: #e8dfc8;
+  --text-muted: #9a9080;
+  --text-faint: #5a5448;
+  --gold: #c8960a;
+  --gold-bright: #f0b830;
+  --gold-dim: #7a5a08;
+  --red: #8b2a2a;
+  --red-bright: #c0392b;
+  --green: #2a6b3a;
+  --green-bright: #27ae60;
+  --shadow: 0 4px 24px rgba(0,0,0,0.6);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,0.8);
+}
+[data-theme="light"] {
+  --bg: #f5f0e8;
+  --surface: #ede7d9;
+  --surface-2: #e4dcc8;
+  --surface-3: #d8ceb4;
+  --border: rgba(100,70,20,0.15);
+  --border-gold: rgba(140,90,10,0.3);
+  --text: #2a1f0e;
+  --text-muted: #6b5a3a;
+  --text-faint: #a08060;
+  --gold: #8b6500;
+  --gold-bright: #b07800;
+  --gold-dim: #c8a060;
+  --red: #8b2a2a;
+  --red-bright: #c0392b;
+  --green: #2a6b3a;
+  --green-bright: #27ae60;
+  --shadow: 0 4px 24px rgba(100,70,20,0.15);
+  --shadow-lg: 0 12px 48px rgba(100,70,20,0.25);
+}
+
+/* === BASE === */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body {
+  min-height: 100dvh;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--text);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+button { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }
+input, textarea, select { font: inherit; color: inherit; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); width: 100%; outline: none; transition: border-color var(--transition); }
+input:focus, textarea:focus, select:focus { border-color: var(--gold); }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* === LAYOUT === */
+.app { display: grid; grid-template-columns: 260px 1fr 280px; grid-template-rows: 56px 1fr; height: 100dvh; overflow: hidden; }
+
+/* === HEADER === */
+.header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-gold);
+  box-shadow: var(--shadow);
+  z-index: 10;
+}
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--gold-bright);
+  letter-spacing: 0.05em;
+}
+.header-logo svg { color: var(--gold); }
+.header-actions { display: flex; align-items: center; gap: var(--space-3); }
+.header-room { font-size: var(--text-sm); color: var(--text-muted); }
+.header-room span { color: var(--gold); font-weight: 600; }
+
+/* === SIDEBAR LEFT === */
+.sidebar-left {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-section { padding: var(--space-4); border-bottom: 1px solid var(--border); }
+.sidebar-section-title {
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: var(--space-3);
+}
+.players-list { display: flex; flex-direction: column; gap: var(--space-2); flex: 1; overflow-y: auto; padding: var(--space-4); }
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  position: relative;
+}
+.player-card:hover { border-color: var(--border-gold); }
+.player-card.active { border-color: var(--gold); background: var(--surface-3); }
+.player-card.dm-card { border-color: var(--gold-dim); }
+.player-card.dm-card.active { border-color: var(--gold-bright); }
+.player-avatar {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-full);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.player-info { flex: 1; min-width: 0; }
+.player-name { font-weight: 600; font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player-class { font-size: var(--text-xs); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player-actions { display: flex; gap: var(--space-1); opacity: 0; transition: opacity var(--transition); }
+.player-card:hover .player-actions { opacity: 1; }
+.player-action-btn {
+  width: 24px; height: 24px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  transition: background var(--transition), color var(--transition);
+}
+.player-action-btn:hover { background: var(--surface-3); color: var(--text); }
+.player-action-btn.delete:hover { background: var(--red); color: #fff; }
+
+/* === MAIN CHAT === */
+.chat-area {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  scroll-behavior: smooth;
+}
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-track { background: transparent; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 2px; }
+.message {
+  display: flex;
+  gap: var(--space-3);
+  max-width: 680px;
+  animation: msgIn 0.2s ease;
+}
+@keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.message.dm-message { align-self: stretch; max-width: 100%; }
+.message.dm-message .msg-bubble {
+  background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface-3) 100%);
+  border-color: var(--border-gold);
+  border-radius: var(--radius-lg);
+  font-style: italic;
+}
+.message.dice-message .msg-bubble {
+  background: var(--surface-3);
+  border-color: var(--gold-dim);
+  text-align: center;
+}
+.msg-avatar {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-full);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.msg-body { flex: 1; min-width: 0; }
+.msg-header { display: flex; align-items: baseline; gap: var(--space-2); margin-bottom: var(--space-1); }
+.msg-name { font-weight: 700; font-size: var(--text-sm); }
+.msg-role { font-size: var(--text-xs); color: var(--text-faint); }
+.msg-time { font-size: var(--text-xs); color: var(--text-faint); margin-left: auto; }
+.msg-bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  line-height: 1.6;
+  font-size: var(--text-base);
+  word-break: break-word;
+}
+.dice-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-2);
+}
+.dice-number {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--gold-bright);
+  line-height: 1;
+}
+.dice-label { font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-1); }
+
+/* === CHAT INPUT === */
+.chat-input-area {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.active-profile-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+.active-profile-avatar {
+  width: 20px; height: 20px;
+  border-radius: var(--radius-full);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+.active-profile-name { color: var(--text); font-weight: 600; }
+.chat-input-row { display: flex; gap: var(--space-2); align-items: flex-end; }
+.chat-textarea {
+  flex: 1;
+  resize: none;
+  min-height: 44px;
+  max-height: 120px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  line-height: 1.5;
+  overflow-y: auto;
+}
+.send-btn {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--gold);
+  color: #0e0c0a;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+  transition: background var(--transition);
+}
+.send-btn:hover { background: var(--gold-bright); }
+
+/* === DICE TOOLBAR === */
+.dice-toolbar {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+.dice-btn {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-gold);
+  background: var(--surface-2);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--gold);
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.dice-btn:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+.adv-btn {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.adv-btn.active-adv { background: var(--green); color: #fff; border-color: var(--green-bright); }
+.adv-btn.active-dis { background: var(--red); color: #fff; border-color: var(--red-bright); }
+
+/* === SIDEBAR RIGHT === */
+.sidebar-right {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.tab-btn {
+  flex: 1;
+  padding: var(--space-3) var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  transition: color var(--transition), border-color var(--transition);
+  text-align: center;
+}
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-panel { flex: 1; overflow-y: auto; padding: var(--space-4); display: none; }
+.tab-panel.active { display: block; }
+
+/* === FORMS === */
+.form-group { margin-bottom: var(--space-4); }
+.form-label { display: block; font-size: var(--text-xs); font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: var(--space-1); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.btn {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  text-align: center;
+}
+.btn-primary { background: var(--gold); color: #0e0c0a; border: 1px solid var(--gold); }
+.btn-primary:hover { background: var(--gold-bright); }
+.btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--border-gold); color: var(--text); }
+.btn-danger { background: transparent; color: var(--red-bright); border: 1px solid var(--red); }
+.btn-danger:hover { background: var(--red); color: #fff; }
+.btn-sm { padding: var(--space-2) var(--space-3); font-size: var(--text-xs); width: auto; }
+
+/* === STAT GRID === */
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin: var(--space-3) 0; }
+.stat-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  text-align: center;
+}
+.stat-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+.stat-value { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; color: var(--gold); line-height: 1.1; }
+.stat-mod { font-size: var(--text-xs); color: var(--text-muted); }
+
+/* === AI DM SETTINGS === */
+.ai-toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+.toggle {
+  width: 42px; height: 24px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  position: relative;
+  cursor: pointer;
+  transition: background var(--transition);
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--gold); border-color: var(--gold); }
+.toggle-knob {
+  position: absolute;
+  width: 18px; height: 18px;
+  background: #fff;
+  border-radius: var(--radius-full);
+  top: 2px; left: 2px;
+  transition: left var(--transition);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.toggle.on .toggle-knob { left: 20px; }
+.ai-status {
+  font-size: var(--text-xs);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--border);
+}
+.ai-status.active { background: color-mix(in oklch, var(--green) 15%, var(--surface)); border-color: var(--green); color: var(--green-bright); }
+.ai-status.inactive { color: var(--text-muted); }
+
+/* === SETUP SCREEN === */
+#setup-screen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+.setup-card {
+  background: var(--surface);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-xl);
+  padding: var(--space-10);
+  width: 100%;
+  max-width: 480px;
+  box-shadow: var(--shadow-lg);
+}
+.setup-title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--gold-bright);
+  text-align: center;
+  margin-bottom: var(--space-2);
+  letter-spacing: 0.05em;
+}
+.setup-subtitle { text-align: center; color: var(--text-muted); margin-bottom: var(--space-8); font-size: var(--text-sm); }
+.color-picker-row { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.color-swatch {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color var(--transition), transform var(--transition);
+}
+.color-swatch.selected, .color-swatch:hover { border-color: var(--gold-bright); transform: scale(1.1); }
+.role-selector { display: flex; gap: var(--space-3); }
+.role-btn {
+  flex: 1;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+.role-btn.selected { border-color: var(--gold); background: var(--surface-3); }
+.role-btn .role-icon { font-size: 24px; display: block; margin-bottom: var(--space-1); }
+.role-btn .role-name { font-family: var(--font-display); font-size: var(--text-sm); font-weight: 600; color: var(--gold); }
+.role-btn .role-desc { font-size: var(--text-xs); color: var(--text-muted); }
+
+/* === MODAL === */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  width: 100%;
+  max-width: 520px;
+  max-height: 80dvh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.modal-title { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; color: var(--gold-bright); margin-bottom: var(--space-6); }
+.modal-actions { display: flex; gap: var(--space-3); margin-top: var(--space-6); }
+.modal-actions .btn { flex: 1; }
+
+/* === THEME TOGGLE === */
+.icon-btn {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-full);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 16px;
+  transition: background var(--transition), color var(--transition);
+}
+.icon-btn:hover { background: var(--surface-3); color: var(--text); }
+
+/* === EMPTY STATE === */
+.empty-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
+  text-align: center;
+  color: var(--text-faint);
+}
+.empty-chat-icon { font-size: 48px; margin-bottom: var(--space-4); opacity: 0.5; }
+.empty-chat h3 { font-family: var(--font-display); color: var(--text-muted); margin-bottom: var(--space-2); }
+
+/* === ONLINE INDICATOR === */
+.online-dot {
+  width: 8px; height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--green-bright);
+  box-shadow: 0 0 6px var(--green-bright);
+  flex-shrink: 0;
+}
+.connection-status {
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.connection-status.connected { border-color: var(--green); color: var(--green-bright); }
+.connection-status.disconnected { border-color: var(--red); color: var(--red-bright); }
+.connection-status.local { border-color: var(--gold-dim); color: var(--gold); }
+
+/* === SUPABASE SETUP NOTE === */
+.info-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+  line-height: 1.6;
+}
+.info-box strong { color: var(--gold); }
+
+/* === RESPONSIVE === */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 56px 1fr auto; }
+  .sidebar-left, .sidebar-right { display: none; }
+  .sidebar-left.open, .sidebar-right.open { display: flex; position: fixed; top: 56px; bottom: 0; z-index: 50; width: 280px; }
+  .sidebar-left.open { left: 0; }
+  .sidebar-right.open { right: 0; }
+}
+
+.divider { height: 1px; background: var(--border); margin: var(--space-3) 0; }
+h4 { font-family: var(--font-display); font-size: var(--text-sm); color: var(--gold); font-weight: 600; margin-bottom: var(--space-3); }
+.char-sheet-header { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+.char-sheet-avatar { width: 48px; height: 48px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; }
+.char-name-block { flex: 1; }
+.char-name { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; color: var(--text); }
+.char-class { font-size: var(--text-sm); color: var(--gold); }
+.char-meta { font-size: var(--text-xs); color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-title">⚔ The Tavern</div>
+    <p class="setup-subtitle">Choose your identity before entering the campaign.</p>
+
+    <div class="form-group">
+      <label class="form-label">Your Name</label>
+      <input type="text" id="setup-name" placeholder="e.g. Kyle" maxlength="24">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Avatar Color</label>
+      <div class="color-picker-row" id="color-picker"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Join as</label>
+      <div class="role-selector">
+        <div class="role-btn selected" data-role="player" onclick="selectRole(this,'player')">
+          <span class="role-icon">🗡️</span>
+          <div class="role-name">Player</div>
+          <div class="role-desc">Enter as an adventurer</div>
+        </div>
+        <div class="role-btn" data-role="dm" onclick="selectRole(this,'dm')">
+          <span class="role-icon">📖</span>
+          <div class="role-name">Dungeon Master</div>
+          <div class="role-desc">Narrate the story</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Room Code</label>
+      <input type="text" id="setup-room" placeholder="e.g. shattered-crown" maxlength="32">
+    </div>
+
+    <button class="btn btn-primary" onclick="enterTavern()">Enter the Tavern</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="main-app" style="display:none">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-logo">
+      <svg aria-label="The Tavern" width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <path d="M14 3 L25 9 L25 19 L14 25 L3 19 L3 9 Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <path d="M14 7 L21 11 L21 17 L14 21 L7 17 L7 11 Z" fill="currentColor" opacity="0.15"/>
+        <circle cx="14" cy="14" r="2.5" fill="currentColor"/>
+      </svg>
+      The Tavern
+    </div>
+    <div class="header-room">Room: <span id="header-room-display">—</span></div>
+    <div class="header-actions">
+      <div class="connection-status local" id="conn-status">
+        <div class="online-dot"></div>
+        <span>Local</span>
+      </div>
+      <button class="icon-btn" data-theme-toggle aria-label="Toggle theme" onclick="toggleTheme()">🌙</button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR LEFT: PLAYERS -->
+  <aside class="sidebar-left">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Adventurers</div>
+    </div>
+    <div class="players-list" id="players-list"></div>
+    <div style="padding: var(--space-4); border-top: 1px solid var(--border);">
+      <button class="btn btn-ghost" onclick="openAddPlayerModal()">+ Add Player</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CHAT -->
+  <main class="chat-area">
+    <div class="chat-messages" id="chat-messages">
+      <div class="empty-chat" id="empty-chat">
+        <div class="empty-chat-icon">🏰</div>
+        <h3>The adventure awaits</h3>
+        <p>Select a profile and send your first message to begin the campaign.</p>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="active-profile-bar">
+        Speaking as:
+        <div class="active-profile-avatar" id="active-avatar" style="background:#888">?</div>
+        <span class="active-profile-name" id="active-name">No profile selected</span>
+      </div>
+      <div class="chat-input-row">
+        <textarea
+          class="chat-textarea"
+          id="chat-input"
+          placeholder="Speak your turn..."
+          rows="1"
+          onkeydown="handleInputKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="send-btn" onclick="sendMessage()" aria-label="Send message">↑</button>
+      </div>
+      <div class="dice-toolbar">
+        <span style="font-size:var(--text-xs);color:var(--text-faint);margin-right:var(--space-1)">🎲</span>
+        <button class="dice-btn" onclick="rollDice(4)">d4</button>
+        <button class="dice-btn" onclick="rollDice(6)">d6</button>
+        <button class="dice-btn" onclick="rollDice(8)">d8</button>
+        <button class="dice-btn" onclick="rollDice(10)">d10</button>
+        <button class="dice-btn" onclick="rollDice(12)">d12</button>
+        <button class="dice-btn" onclick="rollDice(20)">d20</button>
+        <button class="dice-btn" onclick="rollDice(100)">d100</button>
+        <button class="adv-btn" id="adv-btn" onclick="toggleAdvantage()">Adv</button>
+        <button class="adv-btn" id="dis-btn" onclick="toggleDisadvantage()">Dis</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- SIDEBAR RIGHT: TABS -->
+  <aside class="sidebar-right">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('character',this)">Character</button>
+      <button class="tab-btn" onclick="switchTab('settings',this)">Settings</button>
+      <button class="tab-btn" onclick="switchTab('connect',this)">Connect</button>
+    </div>
+
+    <!-- CHARACTER TAB -->
+    <div class="tab-panel active" id="tab-character">
+      <div id="char-sheet-view"></div>
+    </div>
+
+    <!-- SETTINGS / AI DM TAB -->
+    <div class="tab-panel" id="tab-settings">
+      <h4>🤖 AI Dungeon Master</h4>
+      <div class="ai-toggle-row">
+        <span style="font-size:var(--text-sm)">Enable AI DM</span>
+        <div class="toggle" id="ai-toggle" onclick="toggleAI()">
+          <div class="toggle-knob"></div>
+        </div>
+      </div>
+      <div class="ai-status inactive" id="ai-status">AI DM is offline. Enter your OpenAI key below to activate.</div>
+      <div class="form-group">
+        <label class="form-label">OpenAI API Key</label>
+        <input type="password" id="openai-key" placeholder="sk-..." oninput="updateAIKey()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">DM Personality</label>
+        <select id="dm-personality" onchange="updatePersonality()">
+          <option value="dramatic">Dramatic &amp; Cinematic</option>
+          <option value="mysterious">Dark &amp; Mysterious</option>
+          <option value="humorous">Lighthearted &amp; Humorous</option>
+          <option value="brutal">Brutal &amp; Unforgiving</option>
+          <option value="classic">Classic D&D</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Campaign Context</label>
+        <textarea id="campaign-context" rows="4" placeholder="Describe your campaign setting, current quest, house rules..." style="resize:vertical"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="saveAISettings()">Save AI Settings</button>
+    </div>
+
+    <!-- CONNECT TAB -->
+    <div class="tab-panel" id="tab-connect">
+      <h4>🔗 Supabase Realtime</h4>
+      <div class="info-box">
+        <strong>Setup required:</strong> Create a free project at supabase.com, then run the SQL below to enable live multiplayer sync across all players' browsers.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Supabase URL</label>
+        <input type="text" id="sb-url" placeholder="https://xxx.supabase.co">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Anon Key</label>
+        <input type="password" id="sb-key" placeholder="eyJ...">
+      </div>
+      <button class="btn btn-primary" onclick="connectSupabase()" style="margin-bottom:var(--space-3)">Connect</button>
+      <div class="divider"></div>
+      <h4>Required SQL</h4>
+      <div class="info-box" style="font-family:monospace;white-space:pre-wrap;font-size:11px">create table campaign_messages (
+  id uuid default gen_random_uuid() primary key,
+  room text not null,
+  player_id text,
+  player_name text,
+  player_color text,
+  player_role text,
+  content text,
+  msg_type text default 'chat',
+  dice_type int,
+  dice_result int,
+  created_at timestamptz default now()
+);
+
+alter table campaign_messages enable row level security;
+
+create policy "allow all" on campaign_messages
+  for all using (true) with check (true);
+
+alter publication supabase_realtime add table campaign_messages;</div>
+    </div>
+  </aside>
+</div>
+
+<!-- ADD / EDIT PLAYER MODAL -->
+<div class="modal-overlay" id="player-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Create Character</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Character Name</label>
+        <input type="text" id="modal-char-name" placeholder="Thorin Stonebrow" maxlength="32">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Player Name</label>
+        <input type="text" id="modal-player-name" placeholder="Your real name" maxlength="24">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Race</label>
+        <select id="modal-race">
+          <option>Human</option><option>Elf</option><option>Dwarf</option><option>Halfling</option>
+          <option>Gnome</option><option>Half-Elf</option><option>Half-Orc</option><option>Tiefling</option>
+          <option>Dragonborn</option><option>Aasimar</option><option>Tabaxi</option><option>Custom</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Class</label>
+        <select id="modal-class">
+          <option>Barbarian</option><option>Bard</option><option>Cleric</option><option>Druid</option>
+          <option>Fighter</option><option>Monk</option><option>Paladin</option><option>Ranger</option>
+          <option>Rogue</option><option>Sorcerer</option><option>Warlock</option><option>Wizard</option><option>Custom</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Background</label>
+        <select id="modal-background">
+          <option>Acolyte</option><option>Criminal</option><option>Folk Hero</option><option>Noble</option>
+          <option>Outlander</option><option>Sage</option><option>Soldier</option><option>Urchin</option><option>Custom</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Level</label>
+        <input type="number" id="modal-level" min="1" max="20" value="1">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">HP</label>
+        <input type="number" id="modal-hp" min="1" max="999" value="10">
+      </div>
+      <div class="form-group">
+        <label class="form-label">AC</label>
+        <input type="number" id="modal-ac" min="1" max="30" value="12">
+      </div>
+    </div>
+    <label class="form-label">Ability Scores</label>
+    <div class="stat-grid" id="modal-stats">
+      <div class="stat-box"><div class="stat-label">STR</div><input type="number" min="1" max="30" value="10" id="stat-str" style="width:100%;text-align:center;border:none;background:transparent;font-family:var(--font-display);font-size:var(--text-lg);font-weight:700;color:var(--gold);padding:0"></div>
+      <div class="stat-box"><div class="stat-label">DEX</div><input type="number" min="1" max="30" value="10" id="stat-dex" style="width:100%;text-align:center;border:none;background:transparent;font-family:var(--font-display);font-size:var(--text-lg);font-weight:700;color:var(--gold);padding:0"></div>
+      <div class="stat-box"><div class="stat-label">CON</div><input type="number" min="1" max="30" value="10" id="stat-con" style="width:100%;text-align:center;border:none;background:transparent;font-family:var(--font-display);font-size:var(--text-lg);font-weight:700;color:var(--gold);padding:0"></div>
+      <div class="stat-box"><div class="stat-label">INT</div><input type="number" min="1" max="30" value="10" id="stat-int" style="width:100%;text-align:center;border:none;background:transparent;font-family:var(--font-display);font-size:var(--text-lg);font-weight:700;color:var(--gold);padding:0"></div>
+      <div class="stat-box"><div class="stat-label">WIS</div><input type="number" min="1" max="30" value="10" id="stat-wis" style="width:100%;text-align:center;border:none;background:transparent;font-family:var(--font-display);font-size:var(--text-lg);font-weight:700;color:var(--gold);padding:0"></div>
+      <div class="stat-box"><div class="stat-label">CHA</div><input type="number" min="1" max="30" value="10" id="stat-cha" style="width:100%;text-align:center;border:none;background:transparent;font-family:var(--font-display);font-size:var(--text-lg);font-weight:700;color:var(--gold);padding:0"></div>
+    </div>
+    <label class="form-label">Avatar Color</label>
+    <div class="color-picker-row" id="modal-color-picker" style="margin-bottom:var(--space-4)"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('player-modal')">Cancel</button>
+      <button class="btn btn-primary" id="modal-save-btn" onclick="savePlayer()">Save Character</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const COLORS = ['#c0392b','#e67e22','#f1c40f','#2ecc71','#1abc9c','#3498db','#9b59b6','#e91e8c','#00bcd4','#ff5722','#8bc34a','#607d8b'];
+const PERSONALITIES = {
+  dramatic: 'You are a dramatic and cinematic Dungeon Master. Describe scenes with vivid, cinematic language. Build tension. Make every moment feel epic. Keep responses to 2-4 sentences.',
+  mysterious: 'You are a dark and mysterious Dungeon Master. Speak in cryptic hints. The world is dangerous and full of secrets. Keep responses to 2-4 sentences.',
+  humorous: 'You are a lighthearted Dungeon Master who enjoys humor. Mix adventure with comic moments. Keep things fun and accessible. Keep responses to 2-4 sentences.',
+  brutal: 'You are a brutal, unforgiving Dungeon Master. The world has consequences. Death is real. Be honest about danger. Keep responses to 2-4 sentences.',
+  classic: 'You are a classic D&D Dungeon Master. Follow traditional fantasy conventions. Be descriptive and fair. Keep responses to 2-4 sentences.'
+};
+
+let state = {
+  myPlayerId: null,
+  activePlayerId: null,
+  players: {},
+  messages: [],
+  roomCode: '',
+  supabase: null,
+  supabaseChannel: null,
+  aiEnabled: false,
+  openaiKey: '',
+  dmPersonality: 'dramatic',
+  campaignContext: '',
+  editingPlayerId: null,
+  diceMode: 'normal', // 'normal' | 'advantage' | 'disadvantage'
+  currentTheme: 'dark'
+};
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderColorPicker('color-picker', null);
+  renderColorPicker('modal-color-picker', null);
+});
+
+function renderColorPicker(containerId, selected) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = COLORS.map(c =>
+    `<div class="color-swatch${selected===c?' selected':''}" style="background:${c}" onclick="selectColor('${containerId}','${c}',this)"></div>`
+  ).join('');
+  if (!selected) el.querySelector('.color-swatch').classList.add('selected');
+}
+
+function selectColor(containerId, color, el) {
+  document.querySelectorAll(`#${containerId} .color-swatch`).forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function getSelectedColor(containerId) {
+  const el = document.querySelector(`#${containerId} .color-swatch.selected`);
+  return el ? el.style.background : COLORS[0];
+}
+
+let selectedRole = 'player';
+function selectRole(el, role) {
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedRole = role;
+}
+
+// ============================================================
+// ENTER TAVERN
+// ============================================================
+function enterTavern() {
+  const name = document.getElementById('setup-name').value.trim();
+  const room = document.getElementById('setup-room').value.trim();
+  if (!name) { alert('Please enter your name.'); return; }
+  if (!room) { alert('Please enter a room code.'); return; }
+
+  const color = getSelectedColor('color-picker');
+  const id = 'p_' + Math.random().toString(36).slice(2,9);
+  state.myPlayerId = id;
+  state.roomCode = room;
+
+  const player = {
+    id, name, color,
+    role: selectedRole,
+    charName: name,
+    race: 'Human', class: 'Fighter', background: 'Soldier',
+    level: 1, hp: 10, ac: 12,
+    stats: { str:10, dex:10, con:10, int:10, wis:10, cha:10 }
+  };
+  state.players[id] = player;
+  state.activePlayerId = id;
+
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'grid';
+  document.getElementById('header-room-display').textContent = room;
+
+  renderPlayers();
+  updateActiveProfileBar();
+  renderCharSheet();
+
+  // Add welcome message
+  addLocalMessage({
+    type: 'system',
+    content: `🏰 ${name} has entered the tavern as ${ selectedRole==='dm'?'the Dungeon Master':'an adventurer'}.`
+  });
+}
+
+// ============================================================
+// PLAYERS
+// ============================================================
+function renderPlayers() {
+  const list = document.getElementById('players-list');
+  list.innerHTML = '';
+
+  Object.values(state.players).forEach(p => {
+    const isActive = p.id === state.activePlayerId;
+    const isDM = p.role === 'dm';
+    const initials = (p.charName || p.name).slice(0,2).toUpperCase();
+    const div = document.createElement('div');
+    div.className = `player-card${isActive?' active':''}${isDM?' dm-card':''}`;
+    div.onclick = (e) => {
+      if (e.target.closest('.player-actions')) return;
+      setActivePlayer(p.id);
+    };
+    div.innerHTML = `
+      <div class="player-avatar" style="background:${p.color};color:#fff">${initials}</div>
+      <div class="player-info">
+        <div class="player-name">${p.charName || p.name} ${ isDM ? '👑':'' }</div>
+        <div class="player-class">${p.race || ''} ${p.class || ''} ${p.level?'Lv.'+p.level:''}</div>
+      </div>
+      <div class="player-actions">
+        <button class="player-action-btn" onclick="openEditPlayer('${p.id}')" title="Edit" aria-label="Edit">✎</button>
+        <button class="player-action-btn delete" onclick="deletePlayer('${p.id}')" title="Delete" aria-label="Delete">✕</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function setActivePlayer(id) {
+  state.activePlayerId = id;
+  renderPlayers();
+  updateActiveProfileBar();
+  renderCharSheet();
+}
+
+function deletePlayer(id) {
+  if (Object.keys(state.players).length <= 1) { alert("Can't delete the last player!"); return; }
+  if (!confirm('Remove this character from the session?')) return;
+  delete state.players[id];
+  if (state.activePlayerId === id) {
+    state.activePlayerId = Object.keys(state.players)[0];
+  }
+  renderPlayers();
+  updateActiveProfileBar();
+  renderCharSheet();
+}
+
+function updateActiveProfileBar() {
+  const p = state.players[state.activePlayerId];
+  if (!p) return;
+  const initials = (p.charName || p.name).slice(0,2).toUpperCase();
+  document.getElementById('active-avatar').textContent = initials;
+  document.getElementById('active-avatar').style.background = p.color;
+  document.getElementById('active-name').textContent = p.charName || p.name;
+}
+
+// ============================================================
+// ADD / EDIT PLAYER MODAL
+// ============================================================
+function openAddPlayerModal() {
+  state.editingPlayerId = null;
+  document.getElementById('modal-title').textContent = 'Create Character';
+  document.getElementById('modal-save-btn').textContent = 'Add Character';
+  document.getElementById('modal-char-name').value = '';
+  document.getElementById('modal-player-name').value = '';
+  document.getElementById('modal-race').value = 'Human';
+  document.getElementById('modal-class').value = 'Fighter';
+  document.getElementById('modal-background').value = 'Soldier';
+  document.getElementById('modal-level').value = 1;
+  document.getElementById('modal-hp').value = 10;
+  document.getElementById('modal-ac').value = 12;
+  ['str','dex','con','int','wis','cha'].forEach(s => document.getElementById('stat-'+s).value = 10);
+  renderColorPicker('modal-color-picker', null);
+  openModal('player-modal');
+}
+
+function openEditPlayer(id) {
+  const p = state.players[id];
+  if (!p) return;
+  state.editingPlayerId = id;
+  document.getElementById('modal-title').textContent = 'Edit Character';
+  document.getElementById('modal-save-btn').textContent = 'Save Changes';
+  document.getElementById('modal-char-name').value = p.charName || '';
+  document.getElementById('modal-player-name').value = p.name || '';
+  document.getElementById('modal-race').value = p.race || 'Human';
+  document.getElementById('modal-class').value = p.class || 'Fighter';
+  document.getElementById('modal-background').value = p.background || 'Soldier';
+  document.getElementById('modal-level').value = p.level || 1;
+  document.getElementById('modal-hp').value = p.hp || 10;
+  document.getElementById('modal-ac').value = p.ac || 12;
+  const stats = p.stats || {};
+  ['str','dex','con','int','wis','cha'].forEach(s => document.getElementById('stat-'+s).value = stats[s] || 10);
+  renderColorPicker('modal-color-picker', p.color);
+  openModal('player-modal');
+}
+
+function savePlayer() {
+  const charName = document.getElementById('modal-char-name').value.trim();
+  const playerName = document.getElementById('modal-player-name').value.trim();
+  const color = getSelectedColor('modal-color-picker');
+  if (!charName) { alert('Character name is required.'); return; }
+
+  const data = {
+    charName,
+    name: playerName || charName,
+    color,
+    race: document.getElementById('modal-race').value,
+    class: document.getElementById('modal-class').value,
+    background: document.getElementById('modal-background').value,
+    level: parseInt(document.getElementById('modal-level').value) || 1,
+    hp: parseInt(document.getElementById('modal-hp').value) || 10,
+    ac: parseInt(document.getElementById('modal-ac').value) || 12,
+    stats: {
+      str: parseInt(document.getElementById('stat-str').value)||10,
+      dex: parseInt(document.getElementById('stat-dex').value)||10,
+      con: parseInt(document.getElementById('stat-con').value)||10,
+      int: parseInt(document.getElementById('stat-int').value)||10,
+      wis: parseInt(document.getElementById('stat-wis').value)||10,
+      cha: parseInt(document.getElementById('stat-cha').value)||10,
+    }
+  };
+
+  if (state.editingPlayerId) {
+    state.players[state.editingPlayerId] = { ...state.players[state.editingPlayerId], ...data };
+  } else {
+    const id = 'p_' + Math.random().toString(36).slice(2,9);
+    state.players[id] = { id, role: 'player', ...data };
+    state.activePlayerId = id;
+  }
+
+  closeModal('player-modal');
+  renderPlayers();
+  updateActiveProfileBar();
+  renderCharSheet();
+}
+
+// ============================================================
+// CHARACTER SHEET
+// ============================================================
+function modStr(v) { const m = Math.floor((v-10)/2); return (m>=0?'+':'')+m; }
+
+function renderCharSheet() {
+  const p = state.players[state.activePlayerId];
+  const el = document.getElementById('char-sheet-view');
+  if (!p) { el.innerHTML = '<p style="color:var(--text-faint);font-size:var(--text-sm)">No character selected.</p>'; return; }
+  const stats = p.stats || {};
+  const initials = (p.charName||p.name).slice(0,2).toUpperCase();
+  el.innerHTML = `
+    <div class="char-sheet-header">
+      <div class="char-sheet-avatar" style="background:${p.color};color:#fff">${initials}</div>
+      <div class="char-name-block">
+        <div class="char-name">${p.charName||p.name}</div>
+        <div class="char-class">${p.race||''} ${p.class||''}</div>
+        <div class="char-meta">Level ${p.level||1} · ${p.background||''}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openEditPlayer('${p.id}')">Edit</button>
+    </div>
+    <div class="form-row" style="margin-bottom:var(--space-4)">
+      <div class="stat-box"><div class="stat-label">HP</div><div class="stat-value" style="color:var(--red-bright)">${p.hp||10}</div></div>
+      <div class="stat-box"><div class="stat-label">AC</div><div class="stat-value">${p.ac||12}</div></div>
+    </div>
+    <div class="stat-grid">
+      ${['str','dex','con','int','wis','cha'].map(s=>`
+        <div class="stat-box">
+          <div class="stat-label">${s.toUpperCase()}</div>
+          <div class="stat-value">${stats[s]||10}</div>
+          <div class="stat-mod">${modStr(stats[s]||10)}</div>
+        </div>`).join('')}
+    </div>
+  `;
+}
+
+// ============================================================
+// MESSAGING
+// ============================================================
+function addLocalMessage(msg) {
+  const isFirst = state.messages.length === 0;
+  state.messages.push(msg);
+  if (isFirst) document.getElementById('empty-chat').style.display = 'none';
+  renderMessage(msg);
+  scrollChat();
+}
+
+function renderMessage(msg) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+
+  if (msg.type === 'system') {
+    div.style.cssText = 'text-align:center;font-size:var(--text-xs);color:var(--text-faint);padding:var(--space-2) 0;font-style:italic';
+    div.textContent = msg.content;
+    container.appendChild(div);
+    return;
+  }
+
+  const isDM = msg.playerRole === 'dm' || msg.type === 'dm';
+  const isDice = msg.type === 'dice';
+  div.className = `message${isDM?' dm-message':''}${isDice?' dice-message':''}`;
+
+  const initials = (msg.playerName||'?').slice(0,2).toUpperCase();
+  const color = msg.playerColor || '#888';
+
+  let bubbleContent = '';
+  if (isDice) {
+    bubbleContent = `<div class="dice-result">
+      <div class="dice-number">${msg.diceResult}</div>
+      <div class="dice-label">${msg.playerName} rolled d${msg.diceType}${ msg.diceMode && msg.diceMode!=='normal' ? ' ('+msg.diceMode+')':'' }</div>
+    </div>`;
+  } else {
+    bubbleContent = escapeHtml(msg.content);
+  }
+
+  div.innerHTML = `
+    <div class="msg-avatar" style="background:${color};color:#fff">${initials}</div>
+    <div class="msg-body">
+      <div class="msg-header">
+        <span class="msg-name" style="color:${color}">${escapeHtml(msg.playerName||'?')}</span>
+        <span class="msg-role">${isDM?'Dungeon Master': isDice?'Dice Roll':escapeHtml(msg.playerClass||'')}</span>
+        <span class="msg-time">${now}</span>
+      </div>
+      <div class="msg-bubble">${bubbleContent}</div>
+    </div>`;
+
+  container.appendChild(div);
+}
+
+function scrollChat() {
+  const c = document.getElementById('chat-messages');
+  c.scrollTop = c.scrollHeight;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+
+// ============================================================
+// SEND MESSAGE
+// ============================================================
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const content = input.value.trim();
+  if (!content) return;
+  const p = state.players[state.activePlayerId];
+  if (!p) { alert('Please select a profile first.'); return; }
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  const msg = {
+    type: p.role === 'dm' ? 'dm' : 'chat',
+    playerId: p.id,
+    playerName: p.charName || p.name,
+    playerColor: p.color,
+    playerRole: p.role,
+    playerClass: `${p.race||''} ${p.class||''}`.trim(),
+    content
+  };
+
+  addLocalMessage(msg);
+
+  if (state.supabase) await pushToSupabase(msg);
+
+  // AI DM auto-respond
+  if (state.aiEnabled && state.openaiKey && p.role !== 'dm') {
+    await getAIResponse();
+  }
+}
+
+function handleInputKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ============================================================
+// DICE ROLLING
+// ============================================================
+function toggleAdvantage() {
+  if (state.diceMode === 'advantage') { state.diceMode = 'normal'; }
+  else { state.diceMode = 'advantage'; }
+  updateDiceModeButtons();
+}
+function toggleDisadvantage() {
+  if (state.diceMode === 'disadvantage') { state.diceMode = 'normal'; }
+  else { state.diceMode = 'disadvantage'; }
+  updateDiceModeButtons();
+}
+function updateDiceModeButtons() {
+  document.getElementById('adv-btn').className = 'adv-btn' + (state.diceMode==='advantage'?' active-adv':'');
+  document.getElementById('dis-btn').className = 'adv-btn' + (state.diceMode==='disadvantage'?' active-dis':'');
+}
+
+function rollDice(sides) {
+  const p = state.players[state.activePlayerId];
+  if (!p) { alert('Select a profile first.'); return; }
+
+  let result;
+  if (sides === 20 && state.diceMode !== 'normal') {
+    const r1 = Math.ceil(Math.random() * sides);
+    const r2 = Math.ceil(Math.random() * sides);
+    result = state.diceMode === 'advantage' ? Math.max(r1,r2) : Math.min(r1,r2);
+  } else {
+    result = Math.ceil(Math.random() * sides);
+  }
+
+  const msg = {
+    type: 'dice',
+    playerId: p.id,
+    playerName: p.charName || p.name,
+    playerColor: p.color,
+    playerRole: p.role,
+    diceType: sides,
+    diceResult: result,
+    diceMode: sides===20 ? state.diceMode : 'normal',
+    content: `rolled d${sides}: ${result}`
+  };
+
+  addLocalMessage(msg);
+  if (state.supabase) pushToSupabase(msg);
+}
+
+// ============================================================
+// AI DM
+// ============================================================
+function toggleAI() {
+  state.aiEnabled = !state.aiEnabled;
+  const toggle = document.getElementById('ai-toggle');
+  const status = document.getElementById('ai-status');
+  toggle.classList.toggle('on', state.aiEnabled);
+  if (state.aiEnabled && !state.openaiKey) {
+    status.textContent = 'Enter your OpenAI key below to activate.';
+    status.className = 'ai-status inactive';
+    state.aiEnabled = false;
+    toggle.classList.remove('on');
+  } else if (state.aiEnabled) {
+    status.textContent = '✓ AI DM is active and listening.';
+    status.className = 'ai-status active';
+  } else {
+    status.textContent = 'AI DM is offline.';
+    status.className = 'ai-status inactive';
+  }
+}
+
+function updateAIKey() {
+  state.openaiKey = document.getElementById('openai-key').value.trim();
+}
+
+function updatePersonality() {
+  state.dmPersonality = document.getElementById('dm-personality').value;
+}
+
+function saveAISettings() {
+  state.openaiKey = document.getElementById('openai-key').value.trim();
+  state.dmPersonality = document.getElementById('dm-personality').value;
+  state.campaignContext = document.getElementById('campaign-context').value.trim();
+  alert('AI DM settings saved.');
+}
+
+async function getAIResponse() {
+  const systemPrompt = [
+    PERSONALITIES[state.dmPersonality] || PERSONALITIES.dramatic,
+    state.campaignContext ? `\nCampaign context: ${state.campaignContext}` : '',
+    `\nPlayers: ${Object.values(state.players).filter(p=>p.role!=='dm').map(p=>`${p.charName} (${p.race} ${p.class})`).join(', ')}`
+  ].join('');
+
+  const history = state.messages
+    .filter(m => m.type === 'chat' || m.type === 'dm' || m.type === 'dice')
+    .slice(-12)
+    .map(m => ({
+      role: m.playerRole === 'dm' ? 'assistant' : 'user',
+      content: m.type === 'dice'
+        ? `[${m.playerName} rolled a ${m.diceResult} on d${m.diceType}]`
+        : `${m.playerName}: ${m.content}`
+    }));
+
+  // Show typing indicator
+  const typingId = 'typing_' + Date.now();
+  const container = document.getElementById('chat-messages');
+  const typingEl = document.createElement('div');
+  typingEl.id = typingId;
+  typingEl.className = 'message dm-message';
+  typingEl.innerHTML = `
+    <div class="msg-avatar" style="background:var(--gold-dim);color:#fff">DM</div>
+    <div class="msg-body">
+      <div class="msg-header"><span class="msg-name" style="color:var(--gold)">Dungeon Master</span><span class="msg-role">AI</span></div>
+      <div class="msg-bubble" style="font-style:italic;color:var(--text-muted)">The Dungeon Master is pondering...</div>
+    </div>`;
+  container.appendChild(typingEl);
+  scrollChat();
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.openaiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'system', content: systemPrompt }, ...history],
+        max_tokens: 200,
+        temperature: 0.85
+      })
+    });
+    const data = await res.json();
+    const reply = data.choices?.[0]?.message?.content || 'The Dungeon Master remains silent...';
+    typingEl.remove();
+    addLocalMessage({
+      type: 'dm',
+      playerRole: 'dm',
+      playerName: 'Dungeon Master',
+      playerColor: '#c8960a',
+      playerClass: 'AI',
+      content: reply
+    });
+  } catch(e) {
+    typingEl.remove();
+    addLocalMessage({
+      type: 'dm', playerRole: 'dm',
+      playerName: 'Dungeon Master', playerColor: '#c8960a',
+      content: '(The DM lost their train of thought. Check your OpenAI key.)'
+    });
+  }
+}
+
+// ============================================================
+// SUPABASE REALTIME
+// ============================================================
+async function connectSupabase() {
+  const url = document.getElementById('sb-url').value.trim();
+  const key = document.getElementById('sb-key').value.trim();
+  if (!url || !key) { alert('Enter both Supabase URL and anon key.'); return; }
+
+  // Dynamically load Supabase JS
+  if (!window.supabase) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  state.supabase = window.supabase.createClient(url, key);
+  setConnStatus('connected', '● Live');
+
+  // Subscribe to realtime inserts
+  state.supabaseChannel = state.supabase
+    .channel('room:' + state.roomCode)
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'campaign_messages',
+      filter: `room=eq.${state.roomCode}`
+    }, payload => {
+      const row = payload.new;
+      if (row.player_id === state.myPlayerId) return; // skip own messages already shown
+      addLocalMessage({
+        type: row.msg_type || 'chat',
+        playerId: row.player_id,
+        playerName: row.player_name,
+        playerColor: row.player_color,
+        playerRole: row.player_role,
+        content: row.content,
+        diceType: row.dice_type,
+        diceResult: row.dice_result,
+      });
+    })
+    .subscribe();
+
+  alert('Connected to Supabase! Share your room code with friends.');
+}
+
+async function pushToSupabase(msg) {
+  if (!state.supabase) return;
+  await state.supabase.from('campaign_messages').insert({
+    room: state.roomCode,
+    player_id: msg.playerId,
+    player_name: msg.playerName,
+    player_color: msg.playerColor,
+    player_role: msg.playerRole,
+    content: msg.content || '',
+    msg_type: msg.type,
+    dice_type: msg.diceType || null,
+    dice_result: msg.diceResult || null
+  });
+}
+
+function setConnStatus(type, label) {
+  const el = document.getElementById('conn-status');
+  el.className = 'connection-status ' + type;
+  el.innerHTML = `<div class="online-dot"></div><span>${label}</span>`;
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  state.currentTheme = state.currentTheme === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', state.currentTheme);
+  document.querySelector('[data-theme-toggle]').textContent = state.currentTheme === 'dark' ? '🌙' : '☀️';
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
