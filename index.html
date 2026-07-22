@@ -4,11 +4,6 @@
   <meta charset="utf-8" />
   <title>D&D Campaign Chat – Supabase Auth</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!--
-    Supabase JS v2 — UMD bundle via jsDelivr (reliable, no ESM/module race condition).
-    This exposes window.supabase.createClient as a plain global.
-  -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
   <style>
@@ -21,6 +16,12 @@
       --text-muted: #7a7974;
       --primary: #01696f;
       --primary-hover: #0c4e54;
+      --error-bg: #e0ced7;
+      --error-text: #561740;
+      --ok-bg: #d4dfcc;
+      --ok-text: #1e3f0a;
+      --warn-bg: #e7d7c4;
+      --warn-text: #4b2614;
       --radius: 16px;
     }
 
@@ -33,15 +34,14 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
       background: var(--bg);
       color: var(--text);
+      padding: 24px 16px;
     }
 
     .card {
       background: var(--surface);
       border-radius: var(--radius);
       border: 1px solid var(--border);
-      box-shadow:
-        0 1px 2px rgba(0,0,0,0.04),
-        0 8px 24px rgba(0,0,0,0.06);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
       max-width: 960px;
       width: 100%;
       padding: 24px 24px 20px;
@@ -54,10 +54,7 @@
       margin-bottom: 16px;
     }
 
-    .card-title {
-      font-weight: 600;
-      font-size: 18px;
-    }
+    .card-title { font-weight: 600; font-size: 18px; }
 
     .status-pill {
       font-size: 13px;
@@ -66,17 +63,16 @@
       border: 1px solid var(--border);
       background: var(--surface-2);
       color: var(--text-muted);
+      transition: background 0.2s, color 0.2s;
     }
+    .status-pill.ok { background: var(--ok-bg); color: var(--ok-text); border-color: #b3c9a8; }
 
-    h2 {
-      font-size: 22px;
-      margin-bottom: 16px;
-    }
-
-    .grid { display: grid; gap: 8px; }
+    h2 { font-size: 22px; margin-bottom: 16px; }
 
     .grid-2 {
+      display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
       margin-bottom: 8px;
     }
 
@@ -121,32 +117,76 @@
 
     .btn.primary { background: var(--primary); color: #f9f8f4; }
     .btn.primary:hover { background: var(--primary-hover); transform: translateY(-0.5px); }
-
     .btn.secondary { background: var(--surface-2); color: var(--text-muted); }
-    .btn.secondary:hover { background: var(--surface-2); color: var(--text); transform: translateY(-0.5px); }
-
-    .btn[disabled] { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn.secondary:hover { color: var(--text); transform: translateY(-0.5px); }
+    .btn[disabled] { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
     .help {
       font-size: 13px;
       color: var(--text-muted);
       margin-top: 10px;
+      line-height: 1.5;
     }
 
     #message {
       margin-top: 10px;
       font-size: 13px;
-      padding: 8px 10px;
+      padding: 10px 12px;
       border-radius: 8px;
       display: none;
       word-break: break-word;
+      line-height: 1.5;
     }
+    #message.ok  { background: var(--ok-bg);   color: var(--ok-text);   display: block; }
+    #message.err { background: var(--error-bg); color: var(--error-text); display: block; }
+    #message.warn { background: var(--warn-bg); color: var(--warn-text); display: block; }
 
-    #message.ok  { background: #d4dfcc; color: #1e3f0a; display: block; }
-    #message.err { background: #e0ced7; color: #561740; display: block; }
+    /* Debug panel */
+    .debug-toggle {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      padding: 0;
+      text-decoration: underline dotted;
+    }
+    #debugPanel {
+      display: none;
+      margin-top: 8px;
+      background: #1c1b19;
+      color: #adffd6;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 240px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+    #debugPanel.visible { display: block; }
+
+    /* Confirmation notice */
+    #confirmNotice {
+      display: none;
+      margin-top: 10px;
+      background: var(--warn-bg);
+      color: var(--warn-text);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    #confirmNotice.visible { display: block; }
 
     @media (max-width: 720px) {
-      .card { margin: 16px; padding: 20px 16px 16px; }
+      .card { margin: 0; padding: 20px 16px 16px; }
       .grid-2 { grid-template-columns: minmax(0, 1fr); }
       .btn-row { grid-template-columns: minmax(0, 1fr); }
     }
@@ -155,32 +195,32 @@
 <body>
   <main class="card">
     <header class="card-header">
-      <div class="card-title">D&amp;D Campaign Chat</div>
+      <div class="card-title">⚔️ D&amp;D Campaign Chat</div>
       <div id="statusPill" class="status-pill">Logged out</div>
     </header>
 
     <section>
       <h2>Sign in or create account</h2>
 
-      <div class="grid grid-2" style="margin-bottom: 8px;">
+      <div class="grid-2">
         <div>
           <label for="supabaseUrl">Supabase URL</label>
-          <input id="supabaseUrl" type="url" placeholder="https://YOUR-REF.supabase.co" />
+          <input id="supabaseUrl" type="url" placeholder="https://YOUR-REF.supabase.co" autocomplete="off" />
         </div>
         <div>
           <label for="supabaseKey">Anon (publishable) key</label>
-          <input id="supabaseKey" type="text" placeholder="sb_publishable_... or eyJ..." />
+          <input id="supabaseKey" type="text" placeholder="sb_publishable_... or eyJ..." autocomplete="off" />
         </div>
       </div>
 
-      <div class="grid grid-2" style="margin-bottom: 4px;">
+      <div class="grid-2" style="margin-bottom: 4px;">
         <div>
           <label for="email">Email</label>
-          <input id="email" type="email" placeholder="you@example.com" />
+          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
         </div>
         <div>
           <label for="password">Password</label>
-          <input id="password" type="password" placeholder="••••••••" />
+          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
         </div>
       </div>
 
@@ -190,23 +230,28 @@
       </div>
 
       <p class="help">
-        Enter your Supabase project URL and anon key, then sign in or create an account.
+        Enter your Supabase project URL and anon key, then sign in or create an account.<br>
+        <strong>Tip:</strong> If sign-up shows "no errors" but nothing happens, email confirmation may be required —
+        check <em>Authentication → Providers → Email</em> in Supabase and disable "Confirm email" for testing.
       </p>
 
       <div id="message"></div>
+
+      <div id="confirmNotice">
+        📧 <strong>Email confirmation required.</strong> Supabase sent a confirmation link to your email address.
+        Click it, then come back and <strong>Sign in</strong>. If you want instant access without confirmation,
+        go to your Supabase dashboard → <em>Authentication → Providers → Email</em> and turn off
+        <em>"Confirm email"</em>.
+      </div>
+
+      <button class="debug-toggle" id="debugToggle" aria-expanded="false">Show debug output</button>
+      <div id="debugPanel" role="log" aria-live="polite"></div>
     </section>
   </main>
 
   <script>
-    // --- Supabase client init check ---
-    // The UMD bundle exposes window.supabase (with .createClient) synchronously.
-    if (!window.supabase || typeof window.supabase.createClient !== "function") {
-      document.getElementById("message").textContent =
-        "⚠️ Supabase library failed to load. Check your internet connection and refresh.";
-      document.getElementById("message").className = "err";
-    }
-
     const $ = id => document.getElementById(id);
+
     const supabaseUrlInput = $("supabaseUrl");
     const supabaseKeyInput = $("supabaseKey");
     const emailInput       = $("email");
@@ -215,23 +260,61 @@
     const signupBtn        = $("signupBtn");
     const statusPill       = $("statusPill");
     const messageBox       = $("message");
+    const debugPanel       = $("debugPanel");
+    const debugToggle      = $("debugToggle");
+    const confirmNotice    = $("confirmNotice");
 
     let client = null;
+    let debugVisible = false;
+
+    // --- Debug panel toggle ---
+    debugToggle.addEventListener("click", () => {
+      debugVisible = !debugVisible;
+      debugPanel.classList.toggle("visible", debugVisible);
+      debugToggle.textContent = debugVisible ? "Hide debug output" : "Show debug output";
+      debugToggle.setAttribute("aria-expanded", debugVisible);
+    });
+
+    function log(label, data) {
+      const ts = new Date().toLocaleTimeString();
+      const line = `[${ts}] ${label}:\n${JSON.stringify(data, null, 2)}\n\n`;
+      debugPanel.textContent += line;
+      debugPanel.scrollTop = debugPanel.scrollHeight;
+      // Auto-show panel on first log entry
+      if (!debugVisible) {
+        debugVisible = true;
+        debugPanel.classList.add("visible");
+        debugToggle.textContent = "Hide debug output";
+        debugToggle.setAttribute("aria-expanded", "true");
+      }
+    }
 
     function showMessage(text, type) {
       messageBox.textContent = text;
-      messageBox.className = type === "ok" ? "ok" : "err";
+      messageBox.className = type; // "ok" | "err" | "warn"
     }
 
     function clearMessage() {
       messageBox.textContent = "";
       messageBox.className = "";
+      confirmNotice.classList.remove("visible");
     }
 
-    function setLoading(on) {
+    function setStatus(text, ok = false) {
+      statusPill.textContent = text;
+      statusPill.className = "status-pill" + (ok ? " ok" : "");
+    }
+
+    function setLoading(on, primaryLabel = "Sign in", secondaryLabel = "Create account") {
       signinBtn.disabled = on;
       signupBtn.disabled = on;
-      signinBtn.textContent = on ? "Please wait…" : "Sign in";
+      signinBtn.textContent = on ? "Please wait…" : primaryLabel;
+      signupBtn.textContent = on ? "Please wait…" : secondaryLabel;
+    }
+
+    // --- Supabase library check ---
+    if (!window.supabase || typeof window.supabase.createClient !== "function") {
+      showMessage("⚠️ Supabase library failed to load. Check your internet connection and refresh.", "err");
     }
 
     function ensureClient() {
@@ -242,12 +325,10 @@
         showMessage("Enter both Supabase URL and anon key before continuing.", "err");
         return null;
       }
-
       if (!url.startsWith("https://")) {
         showMessage("Supabase URL must start with https://", "err");
         return null;
       }
-
       if (!window.supabase || typeof window.supabase.createClient !== "function") {
         showMessage("Supabase library is not available. Refresh the page.", "err");
         return null;
@@ -255,13 +336,16 @@
 
       try {
         client = window.supabase.createClient(url, key);
+        log("createClient", { url, key: key.slice(0, 20) + "…" });
         return client;
       } catch (e) {
         showMessage("Could not create Supabase client: " + e.message, "err");
+        log("createClient ERROR", { message: e.message });
         return null;
       }
     }
 
+    // ---- SIGN IN ----
     async function handleSignIn() {
       clearMessage();
       const sb = ensureClient();
@@ -276,26 +360,35 @@
       }
 
       setLoading(true);
+
       try {
+        log("signInWithPassword →", { email });
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        log("signInWithPassword ←", { data, error });
 
         if (error) {
           showMessage("Sign-in failed: " + error.message, "err");
-          statusPill.textContent = "Logged out";
+          setStatus("Logged out");
           return;
         }
 
-        showMessage("✓ Signed in as " + data.user.email, "ok");
-        statusPill.textContent = "Logged in";
+        if (data?.user) {
+          showMessage("✓ Signed in as " + data.user.email, "ok");
+          setStatus("Logged in — " + data.user.email.split("@")[0], true);
+        } else {
+          showMessage("Sign-in returned no user. Check debug output.", "warn");
+          setStatus("Unknown state");
+        }
       } catch (e) {
         showMessage("Unexpected error: " + e.message, "err");
-        statusPill.textContent = "Logged out";
+        log("signInWithPassword CATCH", { message: e.message });
+        setStatus("Logged out");
       } finally {
         setLoading(false);
-        signinBtn.textContent = "Sign in";
       }
     }
 
+    // ---- SIGN UP ----
     async function handleSignUp() {
       clearMessage();
       const sb = ensureClient();
@@ -308,47 +401,63 @@
         showMessage("Enter an email and password to create an account.", "err");
         return;
       }
-
       if (password.length < 6) {
         showMessage("Password must be at least 6 characters.", "err");
         return;
       }
 
       setLoading(true);
-      signupBtn.disabled = true;
-      signupBtn.textContent = "Creating…";
 
       try {
+        log("signUp →", { email });
         const { data, error } = await sb.auth.signUp({ email, password });
+        log("signUp ←", { data, error });
 
         if (error) {
           showMessage("Sign-up failed: " + error.message, "err");
-          statusPill.textContent = "Logged out";
+          setStatus("Logged out");
           return;
         }
 
-        // data.user is present even when email confirmation is pending
-        if (data.user && data.session) {
-          showMessage("✓ Account created and signed in as " + data.user.email, "ok");
-          statusPill.textContent = "Logged in";
-        } else if (data.user) {
-          showMessage("✓ Account created for " + data.user.email + ". Check your email to confirm before signing in.", "ok");
-          statusPill.textContent = "Pending confirmation";
+        const user    = data?.user;
+        const session = data?.session;
+
+        if (user && session) {
+          // Email confirmation is OFF — user is immediately logged in
+          showMessage("✓ Account created and signed in as " + user.email, "ok");
+          setStatus("Logged in — " + user.email.split("@")[0], true);
+        } else if (user && !session) {
+          // Email confirmation is ON — user created but not yet confirmed
+          showMessage(
+            "Account created for " + user.email + " — but a session was not returned.",
+            "warn"
+          );
+          setStatus("Pending confirmation");
+          confirmNotice.classList.add("visible");
         } else {
-          showMessage("Sign-up may have succeeded — check your email.", "ok");
+          // No user returned — possible duplicate or other issue
+          showMessage(
+            "Sign-up returned no user object. This often means the account already exists — try signing in instead.",
+            "warn"
+          );
+          setStatus("Unknown");
         }
       } catch (e) {
         showMessage("Unexpected error: " + e.message, "err");
-        statusPill.textContent = "Logged out";
+        log("signUp CATCH", { message: e.message });
+        setStatus("Logged out");
       } finally {
         setLoading(false);
-        signupBtn.disabled = false;
-        signupBtn.textContent = "Create account";
       }
     }
 
     signinBtn.addEventListener("click", e => { e.preventDefault(); handleSignIn(); });
     signupBtn.addEventListener("click", e => { e.preventDefault(); handleSignUp(); });
+
+    // Allow Enter key in password field to trigger sign-in
+    passwordInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); handleSignIn(); }
+    });
   </script>
 </body>
 </html>
