@@ -1,146 +1,101 @@
-<!doctype html>
-<html lang="en" data-theme="light">
-<head>
-  <meta charset="utf-8" />
-  <title>D&D Campaign Chat – Supabase Auth</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Consider adding SRI and crossorigin attributes in production:
-       <script src="..." integrity="sha384-..." crossorigin="anonymous"></script>
-  -->
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+function showConnFeedback(msg, type = 'info') {
+  let fb = document.getElementById('sb-feedback');
+  if (!fb) {
+    fb = document.createElement('div');
+    fb.id = 'sb-feedback';
+    fb.style.cssText = 'margin-top:var(--space-3);padding:var(--space-3);border-radius:var(--radius-md);font-size:var(--text-sm);white-space:pre-wrap;word-break:break-all';
+    const btn = document.querySelector('#tab-connect .btn.btn-primary');
+    btn.insertAdjacentElement('afterend', fb);
+  }
+  const colors = {
+    info:    { bg: 'rgba(200,150,10,0.12)', border: 'rgba(200,150,10,0.3)',  text: 'var(--gold-bright)' },
+    success: { bg: 'rgba(42,107,58,0.2)',   border: 'rgba(39,174,96,0.4)',   text: 'var(--green-bright)' },
+    error:   { bg: 'rgba(139,42,42,0.2)',   border: 'rgba(192,57,43,0.4)',   text: '#e07070' },
+  };
+  const c = colors[type] || colors.info;
+  fb.style.background = c.bg;
+  fb.style.border = `1px solid ${c.border}`;
+  fb.style.color = c.text;
+  fb.textContent = msg;
+}
 
-  <style>
-    :root {
-      --bg: #f7f6f2;
-      --surface: #fbfbf9;
-      --surface-2: #f3f0ec;
-      --border: #d4d1ca;
-      --text: #28251d;
-      --text-muted: #7a7974;
-      --primary: #01696f;
-      --primary-hover: #0c4e54;
-      --error-bg: #e0ced7;
-      --error-text: #561740;
-      --ok-bg: #d4dfcc;
-      --ok-text: #1e3f0a;
-      --warn-bg: #e7d7c4;
-      --warn-text: #4b2614;
-      --radius: 16px;
+async function connectSupabase() {
+  const url = document.getElementById('sb-url').value.trim();
+  const key = document.getElementById('sb-key').value.trim();
+  if (!url || !key) { showConnFeedback('⚠ Enter both Supabase URL and anon key.', 'error'); return; }
+  if (!url.startsWith('https://')) { showConnFeedback('⚠ URL must start with https://', 'error'); return; }
+  if (!key.startsWith('eyJ')) { showConnFeedback('⚠ That doesn\'t look like an anon key (should start with eyJ…). Make sure you\'re not using the service_role key.', 'error'); return; }
+
+  showConnFeedback('⏳ Loading Supabase library…', 'info');
+
+  if (!window.supabase) {
+    try {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+        s.onload = res;
+        s.onerror = () => rej(new Error('Failed to load Supabase JS from CDN. Check your internet connection.'));
+        document.head.appendChild(s);
+      });
+    } catch (e) {
+      showConnFeedback('✗ ' + e.message, 'error');
+      return;
+    }
+  }
+
+  showConnFeedback('⏳ Creating client and testing connection…', 'info');
+
+  try {
+    const client = window.supabase.createClient(url, key);
+
+    // Probe: verify credentials + table exist
+    const { data, error } = await client
+      .from('campaign_messages')
+      .select('id')
+      .limit(1);
+
+    if (error) {
+      if (error.code === '42P01') {
+        showConnFeedback('✗ Table not found.\n\nRun the SQL in the box below first, then try again.\n\nError: ' + error.message, 'error');
+      } else if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
+        showConnFeedback('✗ Invalid anon key.\n\nCopy the anon/public key from Supabase → Project Settings → API.\n\nError: ' + error.message, 'error');
+      } else {
+        showConnFeedback('✗ Connection test failed.\n\nError code: ' + error.code + '\n' + error.message, 'error');
+      }
+      return;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding: 24px 16px;
-    }
+    state.supabase = client;
+    setConnStatus('connected', '● Live');
 
-    .card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
-      max-width: 960px;
-      width: 100%;
-      padding: 24px 24px 20px;
-    }
+    state.supabaseChannel = state.supabase
+      .channel('room:' + state.roomCode)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'campaign_messages',
+        filter: `room=eq.${state.roomCode}`
+      }, payload => {
+        const row = payload.new;
+        if (row.player_id === state.myPlayerId) return;
+        addLocalMessage({
+          type: row.msg_type || 'chat',
+          playerId: row.player_id,
+          playerName: row.player_name,
+          playerColor: row.player_color,
+          playerRole: row.player_role,
+          content: row.content,
+          diceType: row.dice_type,
+          diceResult: row.dice_result,
+        });
+      })
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          showConnFeedback('✓ Connected! Share room code with your party: ' + state.roomCode, 'success');
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          showConnFeedback('✗ Realtime subscription failed: ' + (err?.message || status) + '\n\nCheck that you ran:\nalter publication supabase_realtime add table campaign_messages;', 'error');
+        }
+      });
 
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-
-    .card-title { font-weight: 600; font-size: 18px; }
-
-    .status-pill {
-      font-size: 13px;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      border: 1px solid var(--border);
-      background: var(--surface-2);
-      color: var(--text-muted);
-      transition: background 0.2s, color 0.2s;
-    }
-    .status-pill.ok { background: var(--ok-bg); color: var(--ok-text); border-color: #b3c9a8; }
-
-    h2 { font-size: 22px; margin-bottom: 16px; }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    label {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-      display: block;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      font-size: 14px;
-      color: var(--text);
-      background: #fff;
-    }
-
-    input:focus-visible {
-      outline: 2px solid var(--primary);
-      outline-offset: 2px;
-    }
-
-    .btn-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    button.btn {
-      padding: 10px 0;
-      border-radius: 8px;
-      border: none;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s ease, color 0.15s ease, transform 0.05s ease;
-    }
-
-    .btn.primary { background: var(--primary); color: #f9f8f4; }
-    .btn.primary:hover { background: var(--primary-hover); transform: translateY(-0.5px); }
-    .btn.secondary { background: var(--surface-2); color: var(--text-muted); }
-    .btn.secondary:hover { color: var(--text); transform: translateY(-0.5px); }
-    .btn[disabled] { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-
-    .help {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 10px;
-      line-height: 1.5;
-    }
-
-    #message {
-      margin-top: 10px;
-      font-size: 13px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      display: none;
-      word-break: break-word;
-      line-height: 1.5;
-    }
-    #message.ok  { background: var(--ok-bg);   color: var(--ok-text);   display: block; }
-    #message.err { background: var(--error-bg); color: var(--error-text); display: block; }
-    #message.warn { background:*
-
+  } catch (e) {
+    showConnFeedback('✗ Unexpected error: ' + e.message, 'error');
+  }
+}
