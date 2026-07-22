@@ -1,75 +1,360 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
+  <title>D&D Campaign Chat – Supabase Auth</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>D&D Campaign Chat</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Supabase JS via CDN -->
+  <script type="module" src="https://unpkg.com/@supabase/supabase-js@2.48.0/dist/umd/supabase.min.js"></script>
+
   <style>
-    :root{--bg:#f7f6f2;--surface:#f9f8f5;--surface2:#fbfbf9;--offset:#f1eee8;--text:#26231d;--muted:#77746f;--line:#d8d4cd;--accent:#01696f;--shadow:0 10px 30px rgba(0,0,0,.08);--r:18px;--max:1200px}
-    *{box-sizing:border-box} html,body{margin:0;min-height:100%} body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
-    .wrap{max-width:var(--max);margin:0 auto;padding:16px;display:grid;gap:16px}
-    .top,.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
-    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px}.brand{display:flex;align-items:center;gap:12px}.logo{width:36px;height:36px;border-radius:10px;background:var(--accent);display:grid;place-items:center;color:#fff;font-weight:700}
-    .sub,.small{color:var(--muted)} .pill{padding:7px 10px;border-radius:999px;background:var(--offset);font-size:.82rem}
-    .auth,.panel{padding:16px}.split{display:grid;gap:12px}.grid{display:grid;grid-template-columns:260px 1fr 320px;gap:16px;align-items:start}.hidden{display:none!important}
-    input,textarea,button{font:inherit} input,textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)} textarea{min-height:46px;resize:vertical}
-    .btn{padding:12px 14px;border-radius:12px;border:0;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}.btn.secondary{background:var(--offset);color:var(--text)}
-    .sidebar .profile{padding:12px 14px;border-radius:14px;background:var(--surface2);border:1px solid transparent;margin-bottom:10px;display:flex;justify-content:space-between;gap:8px;align-items:center;cursor:pointer}.profile.active{border-color:color-mix(in srgb,var(--accent) 35%,var(--line));background:color-mix(in srgb,var(--accent) 8%,var(--surface2))}
-    .tag{font-size:.75rem;padding:4px 8px;border-radius:999px;background:var(--offset);color:var(--muted)} .tag.admin{color:var(--accent)}
-    .chat{display:flex;flex-direction:column;min-height:68vh;overflow:hidden}.messages{padding:18px;display:flex;flex-direction:column;gap:12px;flex:1;overflow:auto;max-height:62vh;background:linear-gradient(180deg,rgba(1,105,111,.03),transparent 120px)}
-    .msg{max-width:78%;padding:12px 14px;border-radius:16px;background:var(--surface2);border:1px solid var(--line)} .msg.me{margin-left:auto;background:color-mix(in srgb,var(--accent) 10%,var(--surface2));border-color:color-mix(in srgb,var(--accent) 20%,var(--line))} .meta{font-size:.76rem;color:var(--muted);margin-bottom:4px}
-    .composer{display:grid;grid-template-columns:1fr auto;gap:10px;padding:14px;border-top:1px solid var(--line);background:var(--surface)} .row{display:grid;gap:10px}
-    @media (max-width:980px){.grid{grid-template-columns:1fr}.chat{min-height:60vh}.messages{max-height:none}}
+    :root {
+      --bg: #f7f6f2;
+      --surface: #fbfbf9;
+      --surface-2: #f3f0ec;
+      --border: #d4d1ca;
+      --text: #28251d;
+      --text-muted: #7a7974;
+      --primary: #01696f;
+      --primary-hover: #0c4e54;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow:
+        0 1px 2px rgba(0,0,0,0.04),
+        0 8px 24px rgba(0,0,0,0.06);
+      max-width: 960px;
+      width: 100%;
+      padding: 24px 24px 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .status-pill {
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-muted);
+    }
+
+    h2 {
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-bottom: 8px;
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--text);
+      background: #fff;
+    }
+
+    input:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    button.btn {
+      padding: 10px 0;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.05s ease;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      color: #f9f8f4;
+    }
+
+    .btn.primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-0.5px);
+    }
+
+    .btn.secondary {
+      background: var(--surface-2);
+      color: var(--text-muted);
+    }
+
+    .btn.secondary:hover {
+      background: var(--surface-2);
+      color: var(--text);
+      transform: translateY(-0.5px);
+    }
+
+    .btn[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .help {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+
+    #message {
+      margin-top: 10px;
+      font-size: 13px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    #message.ok {
+      background: #d4dfcc;
+      color: #1e3f0a;
+    }
+
+    #message.err {
+      background: #e0ced7;
+      color: #561740;
+    }
+
+    @media (max-width: 720px) {
+      .card {
+        margin: 16px;
+        padding: 20px 16px 16px;
+      }
+
+      .grid-2 {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .btn-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="top">
-      <div class="brand"><div class="logo">D</div><div><strong>D&D Campaign Chat</strong><div class="sub">Real Supabase login + admin invites</div></div></div>
-      <div class="pill" id="statusPill">Logged out</div>
+  <main class="card">
+    <header class="card-header">
+      <div class="card-title">D&D Campaign Chat</div>
+      <div id="statusPill" class="status-pill">Logged out</div>
     </header>
 
-    <section class="card auth" id="authCard">
+    <section>
       <h2>Sign in or create account</h2>
-      <div class="split" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-        <input id="supabaseUrl" placeholder="Supabase URL" />
-        <input id="supabaseKey" placeholder="Supabase anon key" />
-        <input id="email" type="email" placeholder="Email" />
-        <input id="password" type="password" placeholder="Password" />
-      </div>
-      <div class="split" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px;">
-        <button class="btn" id="signInBtn">Sign in</button>
-        <button class="btn secondary" id="signUpBtn">Create account</button>
-      </div>
-      <p class="small">Use email and password. The app uses Supabase Auth for real accounts, and invites are handled separately by the admin.</p>
-    </section>
 
-    <section class="grid hidden" id="appGrid">
-      <aside class="card sidebar"><div class="panel"><h2>Profiles</h2><div id="profiles"></div><div class="row" style="margin-top:10px"><input id="newProfileName" placeholder="New profile name" /><button class="btn secondary" id="addProfileBtn">Add profile</button></div></div></aside>
-      <main class="card chat">
-        <div class="panel" style="border-bottom:1px solid var(--line)"><h2 id="roomTitle">Room</h2><div class="small" id="whoami"></div></div>
-        <div class="messages" id="messages"></div>
-        <div class="composer"><textarea id="messageInput" placeholder="Type a message as the active profile..."></textarea><button class="btn" id="sendBtn">Send</button></div>
-      </main>
-      <aside class="card panel hidden" id="adminPanel"><h2>Admin</h2><div class="row"><input id="inviteEmail" type="email" placeholder="Friend email" /><input id="inviteName" placeholder="Friend username" /><button class="btn" id="inviteBtn">Create invite</button></div><p class="small">Friend creation/deletion should happen in the Supabase Dashboard or a trusted server using the secret key.</p></aside>
-    </section>
-  </div>
+      <div class="grid grid-2" style="margin-bottom: 8px;">
+        <div>
+          <label for="supabaseUrl">Supabase URL</label>
+          <input id="supabaseUrl" type="url" placeholder="https://YOUR-REF.supabase.co" />
+        </div>
+        <div>
+          <label for="supabaseKey">Anon (publishable) key</label>
+          <input id="supabaseKey" type="text" placeholder="sb_publishable_..." />
+        </div>
+      </div>
 
-  <script>
-    let supabase=null;
-    const state={user:null,isAdmin:false,room:'shattered-crown',profiles:[{name:'DM',role:'admin'},{name:'Vandur',role:'player'},{name:'Edward',role:'player'},{name:'You',role:'player'}],active:0,messages:[{name:'DM',role:'admin',text:'Welcome to the campaign. Sign in to join the room.',me:false}]};
-    const $=id=>document.getElementById(id);
-    const renderProfiles=()=>{$('profiles').innerHTML=state.profiles.map((p,i)=>`<div class="profile ${i===state.active?'active':''}" data-i="${i}"><div><strong>${p.name}</strong><div class="small">${p.role}</div></div><span class="tag ${p.role==='admin'?'admin':''}">${i===state.active?'active':'switch'}</span></div>`).join(''); document.querySelectorAll('.profile').forEach(el=>el.onclick=()=>{state.active=+el.dataset.i; renderAll();});};
-    const renderMessages=()=>{$('messages').innerHTML=state.messages.map(m=>`<div class="msg ${m.me?'me':''}"><div class="meta">${m.name}${m.role==='admin'?' · DM':''}</div><div>${m.text}</div></div>`).join(''); $('messages').scrollTop=$('messages').scrollHeight;};
-    const renderAll=()=>{renderProfiles();renderMessages();$('whoami').textContent=`Active profile: ${state.profiles[state.active].name}`;$('roomTitle').textContent=`Room: ${state.room}`;$('statusPill').textContent=state.user?`Logged in as ${state.user}`:'Logged out';$('adminPanel').classList.toggle('hidden',!state.isAdmin);$('appGrid').classList.toggle('hidden',!state.user);$('authCard').classList.toggle('hidden',!!state.user);};
-    async function initSupabase(){const url=$('supabaseUrl').value.trim();const key=$('supabaseKey').value.trim();if(!url||!key) throw new Error('Enter Supabase URL and anon key');supabase=window.supabase.createClient(url,key); const {data:{session}}=await supabase.auth.getSession(); if(session?.user){state.user=session.user.email;state.isAdmin=/admin|dm/i.test(session.user.email); renderAll();}}
-    async function signIn(){await initSupabase(); const email=$('email').value.trim(); const password=$('password').value.trim(); const {error}=await supabase.auth.signInWithPassword({email,password}); if(error) return alert(error.message); const {data:{session}}=await supabase.auth.getSession(); state.user=session?.user?.email||email; state.isAdmin=/admin|dm/i.test(state.user); state.messages.push({name:'DM',role:'admin',text:`${state.user} joined the room.`,me:false}); renderAll();}
-    async function signUp(){await initSupabase(); const email=$('email').value.trim(); const password=$('password').value.trim(); const {error}=await supabase.auth.signUp({email,password}); if(error) return alert(error.message); alert('Account created. If email confirmations are on, check your inbox.');}
-    $('signInBtn').onclick=()=>signIn(); $('signUpBtn').onclick=()=>signUp(); $('sendBtn').onclick=()=>{const text=$('messageInput').value.trim(); if(!text) return; const p=state.profiles[state.active]; state.messages.push({name:p.name,role:p.role,text,me:true}); if(p.role!=='admin') state.messages.push({name:'DM',role:'admin',text:`The DM responds to ${p.name}: ${text.includes('?')?'Yes, and the world reacts.':'Noted.'}`,me:false}); $('messageInput').value=''; renderMessages();};
-    $('addProfileBtn').onclick=()=>{const n=$('newProfileName').value.trim(); if(!n) return; state.profiles.push({name:n,role:'player'}); $('newProfileName').value=''; renderAll();};
-    $('inviteBtn').onclick=()=>alert('Use the Supabase Dashboard or a trusted server for invites/deletes.');
-    renderAll();
+      <div class="grid grid-2" style="margin-bottom: 4px;">
+        <div>
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="you@example.com" />
+        </div>
+        <div>
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="••••••••" />
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" id="signinBtn">Sign in</button>
+        <button class="btn secondary" id="signupBtn">Create account</button>
+      </div>
+
+      <p class="help">
+        Use email and password. This page talks directly to Supabase Auth; invites and admin actions are handled separately.
+      </p>
+
+      <div id="message"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { createClient } from "https://unpkg.com/@supabase/supabase-js@2.48.0/dist/umd/supabase.esm.js";
+
+    let supabase = null;
+
+    const supabaseUrlInput = document.getElementById("supabaseUrl");
+    const supabaseKeyInput = document.getElementById("supabaseKey");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const signinBtn = document.getElementById("signinBtn");
+    const signupBtn = document.getElementById("signupBtn");
+    const statusPill = document.getElementById("statusPill");
+    const messageBox = document.getElementById("message");
+
+    function showMessage(text, type) {
+      messageBox.textContent = text;
+      messageBox.className = "";
+      messageBox.classList.add(type === "ok" ? "ok" : "err");
+      messageBox.style.display = "block";
+    }
+
+    function setLoading(isLoading) {
+      signinBtn.disabled = isLoading;
+      signupBtn.disabled = isLoading;
+    }
+
+    function ensureClient() {
+      const url = supabaseUrlInput.value.trim();
+      const key = supabaseKeyInput.value.trim();
+
+      if (!url || !key) {
+        showMessage("Please enter both Supabase URL and anon key.", "err");
+        return null;
+      }
+
+      try {
+        supabase = createClient(url, key);
+        return supabase;
+      } catch (e) {
+        console.error("Error creating Supabase client:", e);
+        showMessage("Failed to create Supabase client. Check URL and key.", "err");
+        return null;
+      }
+    }
+
+    async function handleSignIn() {
+      const client = ensureClient();
+      if (!client) return;
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        showMessage("Enter email and password to sign in.", "err");
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const { data, error } = await client.auth.signInWithPassword({ email, password });
+        if (error) {
+          console.error("Sign in error:", error);
+          showMessage("Sign in failed: " + error.message, "err");
+          statusPill.textContent = "Logged out";
+          return;
+        }
+
+        console.log("Sign in success:", data);
+        showMessage("Signed in successfully.", "ok");
+        statusPill.textContent = "Logged in";
+      } catch (e) {
+        console.error("Sign in exception:", e);
+        showMessage("Unexpected error during sign in.", "err");
+        statusPill.textContent = "Logged out";
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function handleSignUp() {
+      const client = ensureClient();
+      if (!client) return;
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        showMessage("Enter email and password to create an account.", "err");
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const { data, error } = await client.auth.signUp({ email, password });
+        if (error) {
+          console.error("Sign up error:", error);
+          showMessage("Sign up failed: " + error.message, "err");
+          statusPill.textContent = "Logged out";
+          return;
+        }
+
+        console.log("Sign up success:", data);
+        showMessage("Account created. Check your email if confirmation is required.", "ok");
+        statusPill.textContent = "Logged in (session may require email confirmation)";
+      } catch (e) {
+        console.error("Sign up exception:", e);
+        showMessage("Unexpected error during sign up.", "err");
+        statusPill.textContent = "Logged out";
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    signinBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      handleSignIn();
+    });
+
+    signupBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      handleSignUp();
+    });
   </script>
 </body>
 </html>
