@@ -55,6 +55,7 @@
     textarea{min-height:46px;resize:vertical}
     .btn{padding:12px 14px;border-radius:12px;background:var(--accent);color:#fff;font-weight:600}
     .btn.secondary{background:var(--offset);color:var(--text)}
+    .btn.danger{background:color-mix(in srgb,var(--bad) 14%,var(--offset));color:var(--bad)}
     .btn.google{background:#fff;color:#444;border:1px solid var(--line);
       display:flex;align-items:center;gap:8px;justify-content:center}
     .btn:active{transform:translateY(1px)}
@@ -80,6 +81,18 @@
     .divider{display:flex;align-items:center;gap:10px;margin:12px 0;
       color:var(--muted);font-size:.85rem}
     .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--line)}
+    .section-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+    .section-head h2{margin:0}
+    .char-card{padding:12px 14px;border-radius:14px;background:var(--surface2);
+      border:1px solid var(--line);margin-bottom:10px}
+    .char-card .top-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+    .ability-box{background:var(--surface2);border:1px solid var(--line);border-radius:12px;
+      padding:10px 8px;text-align:center}
+    .ability-box label{font-size:.72rem;color:var(--muted);display:block;margin-bottom:4px}
+    .ability-box input{text-align:center;padding:6px;margin-bottom:4px}
+    .check-row{display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:.85rem;cursor:pointer}
+    .check-row .mod{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+    .field-label{font-size:.8rem;color:var(--muted);margin:14px 0 6px}
     @media (max-width:980px){.grid{grid-template-columns:1fr}.chat{min-height:60vh}.messages{max-height:none}}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -96,6 +109,8 @@
     </div>
     <div class="header-actions">
       <div class="pill" id="statusPill">Checking session…</div>
+      <button class="btn secondary hidden" id="charactersNavBtn">Characters</button>
+      <button class="btn secondary hidden" id="chatNavBtn">Chat</button>
       <button class="btn secondary hidden" id="signOutBtn">Sign out</button>
     </div>
   </header>
@@ -126,7 +141,7 @@
     </div>
   </section>
 
-  <!-- APP GRID -->
+  <!-- APP GRID (CHAT) -->
   <section class="grid hidden" id="appGrid">
     <aside class="card sidebar">
       <div class="inner">
@@ -174,6 +189,121 @@
       </div>
     </aside>
   </section>
+
+  <!-- CHARACTERS -->
+  <section class="hidden" id="charactersSection" style="display:grid;gap:16px">
+    <div class="card">
+      <div class="inner">
+        <div class="section-head">
+          <h2>My Characters</h2>
+          <button class="btn" id="newCharBtn">+ New Character</button>
+        </div>
+        <div id="myCharacters"></div>
+      </div>
+    </div>
+
+    <div class="card hidden" id="charFormCard">
+      <div class="inner">
+        <h2 id="charFormTitle">New Character</h2>
+
+        <div class="row">
+          <input id="cfName" placeholder="Character name" />
+          <div class="split" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+            <select id="cfRace"></select>
+            <select id="cfClass"></select>
+            <input id="cfSubclass" placeholder="Subclass (optional)" />
+          </div>
+          <div class="split" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+            <select id="cfBackground"></select>
+            <select id="cfAlignment"></select>
+            <input id="cfLevel" type="number" min="1" max="20" value="1" placeholder="Level" />
+          </div>
+          <input id="cfXp" type="number" min="0" placeholder="Experience points" />
+        </div>
+
+        <div class="field-label">Ability scores</div>
+        <div class="split" id="cfAbilities" style="grid-template-columns:repeat(3,minmax(0,1fr))"></div>
+
+        <div class="field-label">Combat</div>
+        <div class="split" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+          <input id="cfAc" type="number" placeholder="Armor Class" />
+          <input id="cfSpeed" type="number" placeholder="Speed (ft)" />
+        </div>
+        <div class="split" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px">
+          <input id="cfHpMax" type="number" placeholder="HP Max" />
+          <input id="cfHpCurrent" type="number" placeholder="HP Current" />
+          <input id="cfHpTemp" type="number" placeholder="HP Temp" />
+        </div>
+        <div class="split" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px">
+          <input id="cfHitDice" placeholder="Hit Dice (e.g. 3d8)" />
+          <div class="status" id="cfProfBonus" style="text-align:center">Proficiency +2</div>
+        </div>
+
+        <div class="field-label">Saving throws</div>
+        <div id="cfSaves" class="split" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
+
+        <div class="field-label">Skills</div>
+        <div id="cfSkills" class="split" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
+        <div class="status" id="cfPassivePerception" style="margin-top:10px">Passive Perception: 10</div>
+
+        <div class="field-label">Proficiencies &amp; languages</div>
+        <textarea id="cfLanguages" placeholder="Languages, tool/armor/weapon proficiencies…"></textarea>
+
+        <div class="field-label">Equipment</div>
+        <textarea id="cfEquipment" placeholder="Weapons, armor, gear, gold…"></textarea>
+
+        <div class="field-label">Features &amp; traits</div>
+        <textarea id="cfFeatures" placeholder="Class features, racial traits, feats…"></textarea>
+
+        <div class="field-label">Personality</div>
+        <div class="split" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+          <textarea id="cfPersonality" placeholder="Personality traits"></textarea>
+          <textarea id="cfIdeals" placeholder="Ideals"></textarea>
+          <textarea id="cfBonds" placeholder="Bonds"></textarea>
+          <textarea id="cfFlaws" placeholder="Flaws"></textarea>
+        </div>
+
+        <div class="field-label">Spellcasting (optional)</div>
+        <div class="split" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+          <select id="cfSpellAbility">
+            <option value="">Not a spellcaster</option>
+            <option value="int">Intelligence</option>
+            <option value="wis">Wisdom</option>
+            <option value="cha">Charisma</option>
+          </select>
+          <div class="status" id="cfSpellDc" style="text-align:center">Save DC —</div>
+          <div class="status" id="cfSpellAtk" style="text-align:center">Attack —</div>
+        </div>
+        <div id="cfSpellSlots" class="split" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-top:10px"></div>
+        <textarea id="cfSpellsKnown" placeholder="Spells known / prepared" style="margin-top:10px"></textarea>
+
+        <div class="field-label">Notes</div>
+        <textarea id="cfNotes" placeholder="Backstory, misc notes…"></textarea>
+
+        <div id="charFormMsg" class="hidden" style="margin-top:12px"></div>
+        <div class="tools" style="margin-top:16px">
+          <button class="btn" id="saveCharBtn">Save Character</button>
+          <button class="btn secondary" id="cancelCharBtn">Cancel</button>
+          <button class="btn danger hidden" id="deleteCharBtn">Delete Character</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card hidden" id="dmRosterCard">
+      <div class="inner">
+        <h2>DM: All Characters</h2>
+        <div id="allCharacters"></div>
+      </div>
+    </div>
+
+    <div class="card hidden" id="dmProfilesCard">
+      <div class="inner">
+        <h2>DM: Manage Players</h2>
+        <div class="small" style="margin-bottom:10px">Fix a player's display name if they made a typo or want a change.</div>
+        <div id="allProfiles"></div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
@@ -193,10 +323,44 @@
     'kaiser6k@gmail.com',
   ];
 
+  // ── D&D 5E REFERENCE DATA ────────────────────────────────────────────────
+  const RACES = ['Dragonborn','Dwarf','Elf','Gnome','Half-Elf','Half-Orc','Halfling','Human','Tiefling'];
+  const CLASSES = ['Barbarian','Bard','Cleric','Druid','Fighter','Monk','Paladin','Ranger','Rogue','Sorcerer','Warlock','Wizard'];
+  const BACKGROUNDS = ['Acolyte','Charlatan','Criminal','Entertainer','Folk Hero','Guild Artisan','Hermit','Noble','Outlander','Sage','Sailor','Soldier','Urchin'];
+  const ALIGNMENTS = ['Lawful Good','Neutral Good','Chaotic Good','Lawful Neutral','True Neutral','Chaotic Neutral','Lawful Evil','Neutral Evil','Chaotic Evil'];
+  const ABILITIES = ['str','dex','con','int','wis','cha'];
+  const ABILITY_LABELS = {str:'Strength',dex:'Dexterity',con:'Constitution',int:'Intelligence',wis:'Wisdom',cha:'Charisma'};
+  const SKILLS = [
+    {key:'acrobatics',name:'Acrobatics',ability:'dex'},
+    {key:'animalHandling',name:'Animal Handling',ability:'wis'},
+    {key:'arcana',name:'Arcana',ability:'int'},
+    {key:'athletics',name:'Athletics',ability:'str'},
+    {key:'deception',name:'Deception',ability:'cha'},
+    {key:'history',name:'History',ability:'int'},
+    {key:'insight',name:'Insight',ability:'wis'},
+    {key:'intimidation',name:'Intimidation',ability:'cha'},
+    {key:'investigation',name:'Investigation',ability:'int'},
+    {key:'medicine',name:'Medicine',ability:'wis'},
+    {key:'nature',name:'Nature',ability:'int'},
+    {key:'perception',name:'Perception',ability:'wis'},
+    {key:'performance',name:'Performance',ability:'cha'},
+    {key:'persuasion',name:'Persuasion',ability:'cha'},
+    {key:'religion',name:'Religion',ability:'int'},
+    {key:'sleightOfHand',name:'Sleight of Hand',ability:'dex'},
+    {key:'stealth',name:'Stealth',ability:'dex'},
+    {key:'survival',name:'Survival',ability:'wis'}
+  ];
+
+  const abilityMod = score => Math.floor((Number(score||10)-10)/2);
+  const fmtMod = mod => mod>=0 ? `+${mod}` : `${mod}`;
+  const profBonusForLevel = level => 2 + Math.floor((Math.max(1,Number(level||1))-1)/4);
+
   const state = {
     user: null, isAdmin: false, aiDmEnabled: false,
     activeUsers: [], messages: [], mapImage: '',
-    presenceChannel: null, msgChannel: null
+    presenceChannel: null, msgChannel: null,
+    myCharacters: [], allCharacters: [], allProfiles: [],
+    view: 'chat'
   };
 
   const $   = id => document.getElementById(id);
@@ -205,6 +369,13 @@
 
   const showMsg = (msg, type = 'error') => {
     const el = $('authMsg');
+    if (!msg) { el.className = 'hidden'; el.textContent = ''; return; }
+    el.className = type;
+    el.textContent = msg;
+  };
+
+  const showCharMsg = (msg, type = 'error') => {
+    const el = $('charFormMsg');
     if (!msg) { el.className = 'hidden'; el.textContent = ''; return; }
     el.className = type;
     el.textContent = msg;
@@ -223,7 +394,7 @@
   const checkAdmin = u =>
     ADMIN_EMAILS.includes(u?.email) || /admin|dm/i.test(u?.email||'');
 
-  // ── RENDER ────────────────────────────────────────────────────────────────
+  // ── RENDER: CHAT ─────────────────────────────────────────────────────────
   const renderUsers = () => {
     const list = [
       ...state.activeUsers,
@@ -265,17 +436,61 @@
       : `<div class="map-placeholder">No map uploaded yet</div>`;
   };
 
+  // ── RENDER: CHARACTERS ───────────────────────────────────────────────────
+  const charSummary = c => `${c.race||'Race?'} ${c.class||'Class?'}${c.subclass?` (${c.subclass})`:''} · Level ${c.level||1}`;
+
+  const renderCharacterCard = (c, {showOwner=false} = {}) => `
+    <div class="char-card">
+      <div class="top-row">
+        <strong>${esc(c.name)}</strong>
+        <span class="tag">${esc(charSummary(c))}</span>
+      </div>
+      <div class="small" style="margin-top:4px">
+        HP ${c.hp_current ?? '?'}/${c.hp_max ?? '?'} · AC ${c.armor_class ?? '?'} · Speed ${c.speed ?? '?'}ft
+        ${showOwner?` · Player: ${esc(c.owner_name||'Unknown')}`:''}
+      </div>
+      <button class="btn secondary" data-action="edit-char" data-char-id="${c.id}" style="margin-top:8px">Edit</button>
+    </div>`;
+
+  const renderMyCharacters = () => {
+    $('myCharacters').innerHTML = state.myCharacters.length
+      ? state.myCharacters.map(c=>renderCharacterCard(c)).join('')
+      : `<div class="small">No characters yet — click "+ New Character" to build one.</div>`;
+  };
+
+  const renderAllCharacters = () => {
+    $('allCharacters').innerHTML = state.allCharacters.length
+      ? state.allCharacters.map(c=>renderCharacterCard(c,{showOwner:true})).join('')
+      : `<div class="small">No characters created yet.</div>`;
+  };
+
+  const renderAllProfiles = () => {
+    $('allProfiles').innerHTML = state.allProfiles.map(p=>`
+      <div class="row" style="grid-template-columns:1fr auto;align-items:center;margin-bottom:8px">
+        <input value="${esc(p.username)}" data-profile-id="${p.id}" class="profileNameInput" />
+        <button class="btn secondary" data-action="save-profile" data-profile-id="${p.id}">Save</button>
+      </div>`).join('');
+  };
+
+  // ── RENDER: ALL ───────────────────────────────────────────────────────────
   const renderAll = () => {
     renderUsers(); renderMessages(); renderMap();
+    renderMyCharacters();
+    if (state.isAdmin) { renderAllCharacters(); renderAllProfiles(); }
     const email = state.user?.email||'';
     $('whoami').textContent       = state.user ? `Signed in: ${email}` : 'Not signed in';
     $('roomTitle').textContent    = `Room: ${ROOM}`;
     $('roomCodeLabel').textContent = ROOM;
     $('statusPill').textContent   = state.user ? (state.isAdmin?`DM · ${email}`:email) : 'Logged out';
     $('adminPanel').classList.toggle('hidden',  !state.isAdmin);
-    $('appGrid').classList.toggle('hidden',     !state.user);
+    $('dmRosterCard').classList.toggle('hidden', !state.isAdmin);
+    $('dmProfilesCard').classList.toggle('hidden', !state.isAdmin);
     $('authCard').classList.toggle('hidden',    !!state.user);
     $('signOutBtn').classList.toggle('hidden',  !state.user);
+    $('charactersNavBtn').classList.toggle('hidden', !state.user);
+    $('chatNavBtn').classList.toggle('hidden', !state.user);
+    $('appGrid').classList.toggle('hidden',        !state.user || state.view!=='chat');
+    $('charactersSection').classList.toggle('hidden', !state.user || state.view!=='characters');
   };
 
   // ── MESSAGES ──────────────────────────────────────────────────────────────
@@ -350,11 +565,238 @@
     if (error) console.error('upsertProfile:',error.message);
   };
 
+  // ── CHARACTERS: DATA ──────────────────────────────────────────────────────
+  const loadCharacters = async () => {
+    if (!sb||!state.user) return;
+    const {data,error} = await sb.from('characters')
+      .select('*').eq('user_id',state.user.id).order('created_at',{ascending:true});
+    if (error) { console.error('loadCharacters:',error.message); return; }
+    state.myCharacters = data||[];
+    renderMyCharacters();
+  };
+
+  const loadAllCharacters = async () => {
+    if (!sb||!state.isAdmin) return;
+    const {data,error} = await sb.from('characters')
+      .select('*, profiles(username)').eq('room_code',ROOM).order('created_at',{ascending:true});
+    if (error) { console.error('loadAllCharacters:',error.message); return; }
+    state.allCharacters = (data||[]).map(c=>({...c, owner_name: c.profiles?.username||'Unknown'}));
+    renderAllCharacters();
+  };
+
+  const loadAllProfiles = async () => {
+    if (!sb||!state.isAdmin) return;
+    const {data,error} = await sb.from('profiles').select('*').order('username',{ascending:true});
+    if (error) { console.error('loadAllProfiles:',error.message); return; }
+    state.allProfiles = data||[];
+    renderAllProfiles();
+  };
+
+  let editingCharId = null;
+
+  const currentAbilityScores = () => {
+    const o = {};
+    ABILITIES.forEach(a => o[a] = Number($('cfAbil_'+a)?.value || 10));
+    return o;
+  };
+
+  const updateComputed = () => {
+    const ab = currentAbilityScores();
+    const level = Number($('cfLevel').value||1);
+    const prof = profBonusForLevel(level);
+    $('cfProfBonus').textContent = `Proficiency ${fmtMod(prof)}`;
+    ABILITIES.forEach(a=>{
+      const mod = abilityMod(ab[a]);
+      const modEl = $('cfAbilMod_'+a); if (modEl) modEl.textContent = fmtMod(mod);
+      const saveChecked = $('cfSave_'+a)?.checked;
+      const saveEl = $('cfSaveMod_'+a);
+      if (saveEl) saveEl.textContent = fmtMod(mod + (saveChecked?prof:0));
+    });
+    SKILLS.forEach(s=>{
+      const mod = abilityMod(ab[s.ability]);
+      const checked = $('cfSkill_'+s.key)?.checked;
+      const el = $('cfSkillMod_'+s.key);
+      if (el) el.textContent = fmtMod(mod + (checked?prof:0));
+    });
+    const perceptionChecked = $('cfSkill_perception')?.checked;
+    const passivePerception = 10 + abilityMod(ab.wis) + (perceptionChecked?prof:0);
+    $('cfPassivePerception').textContent = `Passive Perception: ${passivePerception}`;
+    const spellAbility = $('cfSpellAbility').value;
+    if (spellAbility) {
+      const mod = abilityMod(ab[spellAbility]);
+      $('cfSpellDc').textContent = `Save DC ${8+prof+mod}`;
+      $('cfSpellAtk').textContent = `Attack ${fmtMod(prof+mod)}`;
+    } else {
+      $('cfSpellDc').textContent = 'Save DC —';
+      $('cfSpellAtk').textContent = 'Attack —';
+    }
+  };
+
+  const populateSelect = (id, options, placeholder) => {
+    $(id).innerHTML = `<option value="">${placeholder}</option>` +
+      options.map(o=>`<option value="${o}">${o}</option>`).join('');
+  };
+
+  const buildAbilityInputs = () => {
+    $('cfAbilities').innerHTML = ABILITIES.map(a=>`
+      <div class="ability-box">
+        <label>${ABILITY_LABELS[a]}</label>
+        <input id="cfAbil_${a}" type="number" min="1" max="30" value="10" />
+        <div class="small" id="cfAbilMod_${a}">+0</div>
+      </div>`).join('');
+    ABILITIES.forEach(a=>$('cfAbil_'+a).addEventListener('input',updateComputed));
+  };
+
+  const buildSavesInputs = () => {
+    $('cfSaves').innerHTML = ABILITIES.map(a=>`
+      <label class="check-row">
+        <input type="checkbox" id="cfSave_${a}" />
+        ${ABILITY_LABELS[a]}
+        <span class="mod" id="cfSaveMod_${a}">+0</span>
+      </label>`).join('');
+    ABILITIES.forEach(a=>$('cfSave_'+a).addEventListener('change',updateComputed));
+  };
+
+  const buildSkillsInputs = () => {
+    $('cfSkills').innerHTML = SKILLS.map(s=>`
+      <label class="check-row">
+        <input type="checkbox" id="cfSkill_${s.key}" />
+        ${s.name} <span class="small">(${s.ability.toUpperCase()})</span>
+        <span class="mod" id="cfSkillMod_${s.key}">+0</span>
+      </label>`).join('');
+    SKILLS.forEach(s=>$('cfSkill_'+s.key).addEventListener('change',updateComputed));
+  };
+
+  const buildSpellSlotInputs = () => {
+    $('cfSpellSlots').innerHTML = Array.from({length:9},(_,i)=>i+1).map(lv=>`
+      <div class="ability-box">
+        <label>Lv ${lv}</label>
+        <input id="cfSlot_${lv}" type="number" min="0" max="9" value="0" />
+      </div>`).join('');
+  };
+
+  const resetCharacterForm = () => {
+    $('cfName').value=''; $('cfRace').value=''; $('cfClass').value=''; $('cfSubclass').value='';
+    $('cfBackground').value=''; $('cfAlignment').value=''; $('cfLevel').value=1; $('cfXp').value=0;
+    ABILITIES.forEach(a=>{ $('cfAbil_'+a).value=10; $('cfSave_'+a).checked=false; });
+    SKILLS.forEach(s=>{ $('cfSkill_'+s.key).checked=false; });
+    $('cfAc').value=10; $('cfSpeed').value=30; $('cfHitDice').value='';
+    $('cfHpMax').value=8; $('cfHpCurrent').value=8; $('cfHpTemp').value=0;
+    $('cfLanguages').value=''; $('cfEquipment').value=''; $('cfFeatures').value='';
+    $('cfPersonality').value=''; $('cfIdeals').value=''; $('cfBonds').value=''; $('cfFlaws').value='';
+    $('cfSpellAbility').value='';
+    for(let lv=1;lv<=9;lv++){ $('cfSlot_'+lv).value=0; }
+    $('cfSpellsKnown').value=''; $('cfNotes').value='';
+  };
+
+  const openCharacterForm = (char) => {
+    editingCharId = char?.id || null;
+    showCharMsg('');
+    if (!char) {
+      resetCharacterForm();
+      $('charFormTitle').textContent = 'New Character';
+    } else {
+      $('charFormTitle').textContent = `Edit: ${char.name}`;
+      $('cfName').value = char.name || '';
+      $('cfRace').value = char.race || '';
+      $('cfClass').value = char.class || '';
+      $('cfSubclass').value = char.subclass || '';
+      $('cfBackground').value = char.background || '';
+      $('cfAlignment').value = char.alignment || '';
+      $('cfLevel').value = char.level || 1;
+      $('cfXp').value = char.experience_points || 0;
+      const ab = char.abilities || {};
+      ABILITIES.forEach(a=>{ $('cfAbil_'+a).value = ab[a]||10; });
+      $('cfAc').value = char.armor_class ?? 10;
+      $('cfSpeed').value = char.speed ?? 30;
+      $('cfHitDice').value = char.hit_dice || '';
+      $('cfHpMax').value = char.hp_max ?? 8;
+      $('cfHpCurrent').value = char.hp_current ?? 8;
+      $('cfHpTemp').value = char.hp_temp ?? 0;
+      const saves = new Set(char.saving_throw_profs||[]);
+      ABILITIES.forEach(a=>{ $('cfSave_'+a).checked = saves.has(a); });
+      const skillProfs = new Set(char.skill_profs||[]);
+      SKILLS.forEach(s=>{ $('cfSkill_'+s.key).checked = skillProfs.has(s.key); });
+      $('cfLanguages').value = char.languages || '';
+      $('cfEquipment').value = char.equipment || '';
+      $('cfFeatures').value = char.features_traits || '';
+      $('cfPersonality').value = char.personality_traits || '';
+      $('cfIdeals').value = char.ideals || '';
+      $('cfBonds').value = char.bonds || '';
+      $('cfFlaws').value = char.flaws || '';
+      $('cfSpellAbility').value = char.spellcasting_ability || '';
+      const slots = char.spell_slots || {};
+      for(let lv=1;lv<=9;lv++){ $('cfSlot_'+lv).value = slots[lv]||0; }
+      $('cfSpellsKnown').value = char.spells_known || '';
+      $('cfNotes').value = char.notes || '';
+    }
+    $('deleteCharBtn').classList.toggle('hidden', !char);
+    updateComputed();
+    $('charFormCard').classList.remove('hidden');
+    $('charFormCard').scrollIntoView({behavior:'smooth',block:'start'});
+  };
+
+  const closeCharacterForm = () => {
+    $('charFormCard').classList.add('hidden');
+    editingCharId = null;
+  };
+
+  const saveCharacter = async () => {
+    if (!sb||!state.user) return;
+    const name = $('cfName').value.trim();
+    if (!name) { showCharMsg('Give your character a name.'); return; }
+    const abilities = {}; ABILITIES.forEach(a=>abilities[a]=Number($('cfAbil_'+a).value||10));
+    const saving_throw_profs = ABILITIES.filter(a=>$('cfSave_'+a).checked);
+    const skill_profs = SKILLS.filter(s=>$('cfSkill_'+s.key).checked).map(s=>s.key);
+    const spell_slots = {};
+    for(let lv=1;lv<=9;lv++){ const v=Number($('cfSlot_'+lv).value||0); if(v>0) spell_slots[lv]=v; }
+    const payload = {
+      room_code: ROOM,
+      name, race: $('cfRace').value, class: $('cfClass').value, subclass: $('cfSubclass').value,
+      level: Number($('cfLevel').value||1), background: $('cfBackground').value,
+      alignment: $('cfAlignment').value, experience_points: Number($('cfXp').value||0),
+      abilities, armor_class: Number($('cfAc').value||10), speed: Number($('cfSpeed').value||30),
+      hit_dice: $('cfHitDice').value, hp_max: Number($('cfHpMax').value||8),
+      hp_current: Number($('cfHpCurrent').value||8), hp_temp: Number($('cfHpTemp').value||0),
+      saving_throw_profs, skill_profs,
+      languages: $('cfLanguages').value, equipment: $('cfEquipment').value,
+      features_traits: $('cfFeatures').value, personality_traits: $('cfPersonality').value,
+      ideals: $('cfIdeals').value, bonds: $('cfBonds').value, flaws: $('cfFlaws').value,
+      spellcasting_ability: $('cfSpellAbility').value||null, spell_slots,
+      spells_known: $('cfSpellsKnown').value, notes: $('cfNotes').value,
+      updated_at: new Date().toISOString()
+    };
+    let error;
+    if (editingCharId) {
+      ({error} = await sb.from('characters').update(payload).eq('id',editingCharId));
+    } else {
+      payload.user_id = state.user.id;
+      ({error} = await sb.from('characters').insert(payload));
+    }
+    if (error) { showCharMsg(error.message); return; }
+    closeCharacterForm();
+    await loadCharacters();
+    if (state.isAdmin) await loadAllCharacters();
+  };
+
+  const deleteCharacter = async () => {
+    if (!editingCharId || !sb) return;
+    if (!confirm('Delete this character? This cannot be undone.')) return;
+    const {error} = await sb.from('characters').delete().eq('id',editingCharId);
+    if (error) { showCharMsg(error.message); return; }
+    closeCharacterForm();
+    await loadCharacters();
+    if (state.isAdmin) await loadAllCharacters();
+  };
+
   // ── SESSION ───────────────────────────────────────────────────────────────
   const applySession = async session => {
     if (!session?.user) {
       state.user=null; state.isAdmin=false;
       state.activeUsers=[]; state.messages=[];
+      state.myCharacters=[]; state.allCharacters=[]; state.allProfiles=[];
+      state.view='chat';
+      closeCharacterForm();
       if(state.presenceChannel&&sb){await sb.removeChannel(state.presenceChannel);state.presenceChannel=null;}
       if(state.msgChannel&&sb){await sb.removeChannel(state.msgChannel);state.msgChannel=null;}
       renderAll(); return;
@@ -365,6 +807,8 @@
     await loadMessages();
     subscribeMessages();
     await setupPresence(session.user);
+    await loadCharacters();
+    if (state.isAdmin) { await loadAllCharacters(); await loadAllProfiles(); }
     renderAll();
   };
 
@@ -407,6 +851,10 @@
     if (sb) await sb.auth.signOut();
     await applySession(null);
   };
+
+  // ── NAV ───────────────────────────────────────────────────────────────────
+  $('charactersNavBtn').onclick = () => { state.view='characters'; renderAll(); };
+  $('chatNavBtn').onclick = () => { state.view='chat'; renderAll(); };
 
   // ── SEND ──────────────────────────────────────────────────────────────────
   const doSend = async () => {
@@ -458,6 +906,50 @@
     r.readAsDataURL(file);
   };
   $('clearMapBtn').onclick = ()=>{ state.mapImage='';$('mapImageInput').value='';renderMap(); };
+
+  // ── CHARACTERS: EVENTS ───────────────────────────────────────────────────
+  $('newCharBtn').onclick = () => openCharacterForm(null);
+  $('cancelCharBtn').onclick = closeCharacterForm;
+  $('saveCharBtn').onclick = saveCharacter;
+  $('deleteCharBtn').onclick = deleteCharacter;
+  $('cfSpellAbility').addEventListener('change',updateComputed);
+  $('cfLevel').addEventListener('input',updateComputed);
+
+  $('myCharacters').addEventListener('click', e=>{
+    const btn = e.target.closest('[data-action="edit-char"]');
+    if (!btn) return;
+    const char = state.myCharacters.find(c=>c.id===btn.dataset.charId);
+    if (char) openCharacterForm(char);
+  });
+
+  $('allCharacters').addEventListener('click', e=>{
+    const btn = e.target.closest('[data-action="edit-char"]');
+    if (!btn) return;
+    const char = state.allCharacters.find(c=>c.id===btn.dataset.charId);
+    if (char) openCharacterForm(char);
+  });
+
+  $('allProfiles').addEventListener('click', async e=>{
+    const btn = e.target.closest('[data-action="save-profile"]');
+    if (!btn) return;
+    const id = btn.dataset.profileId;
+    const input = $('allProfiles').querySelector(`input[data-profile-id="${id}"]`);
+    const name = input.value.trim();
+    if (!name) return;
+    const {error} = await sb.from('profiles').update({username:name}).eq('id',id);
+    if (error) console.error('save profile:',error.message);
+    await loadAllProfiles();
+  });
+
+  // ── INIT FORM WIDGETS (once, regardless of auth state) ──────────────────
+  populateSelect('cfRace', RACES, 'Race');
+  populateSelect('cfClass', CLASSES, 'Class');
+  populateSelect('cfBackground', BACKGROUNDS, 'Background');
+  populateSelect('cfAlignment', ALIGNMENTS, 'Alignment');
+  buildAbilityInputs();
+  buildSavesInputs();
+  buildSkillsInputs();
+  buildSpellSlotInputs();
 
   // ── BOOT ──────────────────────────────────────────────────────────────────
   (async()=>{
