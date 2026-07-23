@@ -178,18 +178,17 @@
 
 <script>
   const SUPABASE_URL = "https://zvhnqfrnpdoybndlzrer.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_3XNsYKM6UXqLxxGRoHtl-Q_0e6SSIJN";
+  const SUPABASE_ANON_KEY = "sb_publishable_3XNsYKM6UXqLxxGRoHtl-Q_0e6SSIJN";
 
-// ✅ CORRECT — use window.supabase from the CDN script
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // Renamed from `supabase` to `sb` to avoid any chance of colliding with
+  // window.supabase (the library object the CDN script above sets up).
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // Which campaign room this page shows. Share a link like index.html?room=valecrest
   // with your players, or just leave everyone on the default room below.
   const ROOM = new URLSearchParams(location.search).get('room') || 'valecrest';
 
   // Emails that should automatically get DM tools when they sign in.
-  // Add your own email here, e.g. 'kyle@example.com' — otherwise you'll only
-  // get DM tools if your email happens to contain "admin" or "dm".
   const ADMIN_EMAILS = [
     'kaiser6k@gmail.com',
   ];
@@ -281,8 +280,8 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ── MESSAGES ──────────────────────────────────────────────────────────────
   const loadMessages = async () => {
-    if (!supabase) return;
-    const {data,error} = await supabase.from('campaign_messages')
+    if (!sb) return;
+    const {data,error} = await sb.from('campaign_messages')
       .select('*').eq('room_code',ROOM).order('created_at',{ascending:true}).limit(100);
     if (error) { console.error('loadMessages:',error.message); return; }
     state.messages = data||[];
@@ -290,8 +289,8 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   };
 
   const subscribeMessages = () => {
-    if (!supabase||state.msgChannel) return;
-    state.msgChannel = supabase.channel('msgs-'+ROOM)
+    if (!sb||state.msgChannel) return;
+    state.msgChannel = sb.channel('msgs-'+ROOM)
       .on('postgres_changes',{event:'INSERT',schema:'public',
         table:'campaign_messages',filter:`room_code=eq.${ROOM}`},
         payload => { state.messages.push(payload.new); renderMessages(); })
@@ -299,10 +298,10 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   };
 
   const sendMessage = async (body, html=null) => {
-    if (!supabase||!state.user) return;
+    if (!sb||!state.user) return;
     const name = state.user.user_metadata?.username
       || state.user.email?.split('@')[0]||'Player';
-    const {error} = await supabase.from('campaign_messages').insert({
+    const {error} = await sb.from('campaign_messages').insert({
       room_code:    ROOM,
       speaker_id:   state.user.id,
       speaker_name: name,
@@ -316,9 +315,9 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ── PRESENCE ──────────────────────────────────────────────────────────────
   const setupPresence = async user => {
-    if (!supabase) return;
-    if (state.presenceChannel) { await supabase.removeChannel(state.presenceChannel); state.presenceChannel=null; }
-    const ch = supabase.channel('presence-'+ROOM);
+    if (!sb) return;
+    if (state.presenceChannel) { await sb.removeChannel(state.presenceChannel); state.presenceChannel=null; }
+    const ch = sb.channel('presence-'+ROOM);
     ch.on('presence',{event:'sync'},()=>{
         const seen=new Map();
         Object.values(ch.presenceState()).flat().forEach(p=>{
@@ -343,8 +342,8 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ── PROFILE ───────────────────────────────────────────────────────────────
   const upsertProfile = async user => {
-    if (!supabase) return;
-    const {error} = await supabase.from('profiles').upsert({
+    if (!sb) return;
+    const {error} = await sb.from('profiles').upsert({
       id:       user.id,
       username: user.user_metadata?.username||user.email?.split('@')[0]||'Player'
     },{onConflict:'id'});
@@ -356,8 +355,8 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     if (!session?.user) {
       state.user=null; state.isAdmin=false;
       state.activeUsers=[]; state.messages=[];
-      if(state.presenceChannel&&supabase){await supabase.removeChannel(state.presenceChannel);state.presenceChannel=null;}
-      if(state.msgChannel&&supabase){await supabase.removeChannel(state.msgChannel);state.msgChannel=null;}
+      if(state.presenceChannel&&sb){await sb.removeChannel(state.presenceChannel);state.presenceChannel=null;}
+      if(state.msgChannel&&sb){await sb.removeChannel(state.msgChannel);state.msgChannel=null;}
       renderAll(); return;
     }
     state.user    = session.user;
@@ -371,31 +370,31 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ── AUTH ──────────────────────────────────────────────────────────────────
   $('googleBtn').onclick = async () => {
-    if (!supabase) return showMsg('Supabase not configured.');
+    if (!sb) return showMsg('Supabase not configured.');
     showMsg('');
-    const {error} = await supabase.auth.signInWithOAuth({
+    const {error} = await sb.auth.signInWithOAuth({
       provider:'google', options:{redirectTo:window.location.href}
     });
     if (error) showMsg(error.message);
   };
 
   $('signInBtn').onclick = async () => {
-    if (!supabase) return showMsg('Supabase not configured.');
+    if (!sb) return showMsg('Supabase not configured.');
     showMsg('');
     const email=$('email').value.trim(), password=$('password').value.trim();
     if (!email||!password) return showMsg('Enter email and password.');
-    const {data,error} = await supabase.auth.signInWithPassword({email,password});
+    const {data,error} = await sb.auth.signInWithPassword({email,password});
     if (error) return showMsg(error.message);
     await applySession(data.session);
   };
 
   $('signUpBtn').onclick = async () => {
-    if (!supabase) return showMsg('Supabase not configured.');
+    if (!sb) return showMsg('Supabase not configured.');
     showMsg('');
     const email=$('email').value.trim(), password=$('password').value.trim();
     if (!email||!password) return showMsg('Enter email and password.');
     if (password.length<6) return showMsg('Password must be at least 6 characters.');
-    const {data,error} = await supabase.auth.signUp({email,password});
+    const {data,error} = await sb.auth.signUp({email,password});
     if (error) return showMsg(error.message);
     if (data.session) {
       await applySession(data.session);
@@ -405,7 +404,7 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   };
 
   $('signOutBtn').onclick = async () => {
-    if (supabase) await supabase.auth.signOut();
+    if (sb) await sb.auth.signOut();
     await applySession(null);
   };
 
@@ -443,9 +442,9 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   $('saveProfileBtn').onclick = async ()=>{
     const name=$('editName').value.trim();
-    if(!name||!supabase||!state.user) return;
-    await supabase.from('profiles').update({username:name}).eq('id',state.user.id);
-    await supabase.auth.updateUser({data:{username:name}});
+    if(!name||!sb||!state.user) return;
+    await sb.from('profiles').update({username:name}).eq('id',state.user.id);
+    await sb.auth.updateUser({data:{username:name}});
     if(state.presenceChannel) await state.presenceChannel.track({
       user_id:state.user.id,username:name,
       role:state.isAdmin?'dm':'player',online_at:new Date().toISOString()
@@ -462,11 +461,11 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ── BOOT ──────────────────────────────────────────────────────────────────
   (async()=>{
-    if (!supabase) { $('statusPill').textContent='Supabase not loaded'; renderAll(); return; }
-    const {data:{session}} = await supabase.auth.getSession();
+    if (!sb) { $('statusPill').textContent='Supabase not loaded'; renderAll(); return; }
+    const {data:{session}} = await sb.auth.getSession();
     if (session) await applySession(session);
     else { $('statusPill').textContent='Not signed in'; renderAll(); }
-    supabase.auth.onAuthStateChange(async(_,s)=>await applySession(s));
+    sb.auth.onAuthStateChange(async(_,s)=>await applySession(s));
   })();
 </script>
 </body>
