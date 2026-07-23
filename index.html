@@ -165,7 +165,7 @@
         <div class="tools">
           <button class="btn secondary" id="rollBtn">🎲 Roll d20</button>
           <button class="btn secondary" id="rollAdvBtn">⬆ Advantage</button>
-          <button class="btn secondary" id="rollDisBtn">⬇ Disadvantage</button>
+          <button class="btn secondary" id="rollDisBtn">⬇ Disadvantage</button><button class="btn secondary hidden" id="askAiDmBtn">🤖 Ask the DM</button>
         </div>
       </div>
     </main>
@@ -489,7 +489,7 @@
     $('signOutBtn').classList.toggle('hidden',  !state.user);
     $('charactersNavBtn').classList.toggle('hidden', !state.user);
     $('chatNavBtn').classList.toggle('hidden', !state.user);
-    $('appGrid').classList.toggle('hidden',        !state.user || state.view!=='chat');
+    $('appGrid').classList.toggle('hidden',        !state.user || state.view!=='chat'); $('askAiDmBtn').classList.toggle('hidden', !state.user || !state.aiDmEnabled);
     $('charactersSection').classList.toggle('hidden', !state.user || state.view!=='characters');
   };
 
@@ -886,7 +886,7 @@
   $('rollDisBtn').onclick = ()=>quickRoll('d20 Disadvantage',()=>[rollDie(20),rollDie(20)]);
 
   // ── ADMIN ─────────────────────────────────────────────────────────────────
-  $('aiDmToggle').onchange = ()=>{ state.aiDmEnabled=$('aiDmToggle').checked; renderUsers(); };
+  $('aiDmToggle').onchange = ()=>{ state.aiDmEnabled=$('aiDmToggle').checked; renderAll(); }; const askAiDm = async () => { if (!state.aiDmEnabled || !sb || !state.user) return; const {data:{session}} = await sb.auth.getSession(); if (!session) return; const btn = $('askAiDmBtn'); btn.disabled = true; const original = btn.textContent; btn.textContent = 'The DM is thinking…'; try { const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-dm`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({room_code: ROOM}) }); if (!res.ok) console.error('AI DM error:', await res.text()); } catch (e) { console.error('AI DM request failed:', e); } finally { btn.disabled = false; btn.textContent = original; } }; $('askAiDmBtn').onclick = askAiDm;
 
   $('saveProfileBtn').onclick = async ()=>{
     const name=$('editName').value.trim();
