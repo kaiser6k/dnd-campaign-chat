@@ -183,6 +183,17 @@ const SUPABASE_ANON_KEY = "sb_publishable_3XNsYKM6UXqLxxGRoHtl-Q_0e6SSIJN";
 // ✅ CORRECT — use window.supabase from the CDN script
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // Which campaign room this page shows. Share a link like index.html?room=valecrest
+  // with your players, or just leave everyone on the default room below.
+  const ROOM = new URLSearchParams(location.search).get('room') || 'valecrest';
+
+  // Emails that should automatically get DM tools when they sign in.
+  // Add your own email here, e.g. 'kyle@example.com' — otherwise you'll only
+  // get DM tools if your email happens to contain "admin" or "dm".
+  const ADMIN_EMAILS = [
+    // 'your-email@example.com',
+  ];
+
   const state = {
     user: null, isAdmin: false, aiDmEnabled: false,
     activeUsers: [], messages: [], mapImage: '',
