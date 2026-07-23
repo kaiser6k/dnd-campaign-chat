@@ -6,452 +6,460 @@
   <title>D&D Campaign Chat</title>
   <style>
     :root{
-      --bg:#f7f6f2;
-      --surface:#f9f8f5;
-      --surface2:#fbfbf9;
-      --offset:#f1eee8;
-      --text:#26231d;
-      --muted:#77746f;
-      --line:#d8d4cd;
-      --accent:#01696f;
-      --accent2:#0c4e54;
-      --good:#437a22;
-      --bad:#a12c7b;
-      --shadow:0 10px 30px rgba(0,0,0,.08);
-      --r:18px;
-      --r2:12px;
-      --max:1200px;
+      --bg:#f7f6f2;--surface:#f9f8f5;--surface2:#fbfbf9;--offset:#f1eee8;
+      --text:#26231d;--muted:#77746f;--line:#d8d4cd;--accent:#01696f;
+      --accent2:#0c4e54;--good:#437a22;--bad:#a12c7b;
+      --shadow:0 10px 30px rgba(0,0,0,.08);--r:18px;--r2:12px;--max:1200px;
     }
     *{box-sizing:border-box}
     html,body{margin:0;min-height:100%}
-    body{
-      font-family:Inter,system-ui,sans-serif;
-      background:var(--bg);
-      color:var(--text);
-      line-height:1.5;
-    }
+    body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
     button,input,select,textarea{font:inherit}
     button{cursor:pointer;border:0}
     .wrap{max-width:var(--max);margin:0 auto;padding:16px;display:grid;gap:16px}
-    .top{
-      display:flex;justify-content:space-between;align-items:center;gap:12px;
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;
       padding:16px 18px;background:var(--surface);border:1px solid var(--line);
-      border-radius:var(--r);box-shadow:var(--shadow)
-    }
+      border-radius:var(--r);box-shadow:var(--shadow)}
     .brand{display:flex;align-items:center;gap:12px}
-    .logo{
-      width:36px;height:36px;border-radius:10px;
+    .logo{width:36px;height:36px;border-radius:10px;
       background:linear-gradient(135deg,var(--accent),#2a8a90);
-      display:grid;place-items:center;color:white;font-weight:700
-    }
+      display:grid;place-items:center;color:white;font-weight:700}
     .sub{color:var(--muted);font-size:.92rem}
     .grid{display:grid;grid-template-columns:260px 1fr 320px;gap:16px;align-items:start}
-    .card{
-      background:var(--surface);border:1px solid var(--line);
-      border-radius:var(--r);box-shadow:var(--shadow)
-    }
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
     .card h2,.card h3{margin:0 0 12px;font-size:1rem}
     .card .inner{padding:16px}
-    .sidebar .profile{
-      padding:12px 14px;border-radius:14px;background:var(--surface2);
+    .sidebar .profile{padding:12px 14px;border-radius:14px;background:var(--surface2);
       border:1px solid transparent;margin-bottom:10px;
-      display:flex;justify-content:space-between;gap:8px;align-items:center
-    }
-    .profile.active{
-      border-color:color-mix(in srgb,var(--accent) 35%,var(--line));
-      background:color-mix(in srgb,var(--accent) 8%,var(--surface2))
-    }
-    .tag{
-      font-size:.75rem;padding:4px 8px;border-radius:999px;
-      background:var(--offset);color:var(--muted)
-    }
+      display:flex;justify-content:space-between;gap:8px;align-items:center}
+    .profile.active{border-color:color-mix(in srgb,var(--accent) 35%,var(--line));
+      background:color-mix(in srgb,var(--accent) 8%,var(--surface2))}
+    .tag{font-size:.75rem;padding:4px 8px;border-radius:999px;background:var(--offset);color:var(--muted)}
     .tag.admin{background:color-mix(in srgb,var(--accent) 12%,var(--offset));color:var(--accent)}
     .chat{display:flex;flex-direction:column;min-height:68vh;overflow:hidden}
-    .messages{
-      padding:18px;display:flex;flex-direction:column;gap:12px;flex:1;
+    .messages{padding:18px;display:flex;flex-direction:column;gap:12px;flex:1;
       overflow:auto;max-height:62vh;
-      background:linear-gradient(180deg,rgba(1,105,111,.03),transparent 120px)
-    }
-    .msg{
-      max-width:78%;padding:12px 14px;border-radius:16px;
-      background:var(--surface2);border:1px solid var(--line)
-    }
-    .msg.me{
-      margin-left:auto;
+      background:linear-gradient(180deg,rgba(1,105,111,.03),transparent 120px)}
+    .msg{max-width:78%;padding:12px 14px;border-radius:16px;
+      background:var(--surface2);border:1px solid var(--line)}
+    .msg.me{margin-left:auto;
       background:color-mix(in srgb,var(--accent) 10%,var(--surface2));
-      border-color:color-mix(in srgb,var(--accent) 20%,var(--line))
-    }
+      border-color:color-mix(in srgb,var(--accent) 20%,var(--line))}
+    .msg.dm-msg{background:color-mix(in srgb,var(--bad) 7%,var(--surface2));
+      border-color:color-mix(in srgb,var(--bad) 18%,var(--line))}
     .meta{font-size:.76rem;color:var(--muted);margin-bottom:4px}
-    .composer{
-      display:grid;grid-template-columns:1fr auto;gap:10px;
-      padding:14px;border-top:1px solid var(--line);background:var(--surface)
-    }
-    textarea,input,select{
-      width:100%;padding:12px;border-radius:12px;
-      border:1px solid var(--line);background:var(--surface2);color:var(--text)
-    }
+    .composer{display:grid;grid-template-columns:1fr auto;gap:10px;
+      padding:14px;border-top:1px solid var(--line);background:var(--surface)}
+    textarea,input,select{width:100%;padding:12px;border-radius:12px;
+      border:1px solid var(--line);background:var(--surface2);color:var(--text)}
     textarea{min-height:46px;resize:vertical}
-    .btn{
-      padding:12px 14px;border-radius:12px;
-      background:var(--accent);color:#fff;font-weight:600
-    }
+    .btn{padding:12px 14px;border-radius:12px;background:var(--accent);color:#fff;font-weight:600}
     .btn.secondary{background:var(--offset);color:var(--text)}
-    .btn.google{
-      background:#fff;color:#444;border:1px solid var(--line);
-      display:flex;align-items:center;gap:8px;justify-content:center
-    }
+    .btn.google{background:#fff;color:#444;border:1px solid var(--line);
+      display:flex;align-items:center;gap:8px;justify-content:center}
     .btn:active{transform:translateY(1px)}
     .row{display:grid;gap:10px}
     .split{display:grid;gap:12px}
     .tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .map-preview{
-      width:100%;aspect-ratio:16/9;object-fit:cover;
-      border-radius:14px;border:1px solid var(--line);background:var(--surface2)
-    }
-    .map-placeholder{
-      display:grid;place-items:center;min-height:180px;border-radius:14px;
-      border:1px dashed var(--line);color:var(--muted);background:var(--surface2)
-    }
-    .status{
-      padding:12px 16px;border-radius:14px;background:var(--offset);
-      border:1px solid var(--line);color:var(--muted)
-    }
+    .map-preview{width:100%;aspect-ratio:16/9;object-fit:cover;
+      border-radius:14px;border:1px solid var(--line);background:var(--surface2)}
+    .map-placeholder{display:grid;place-items:center;min-height:180px;border-radius:14px;
+      border:1px dashed var(--line);color:var(--muted);background:var(--surface2)}
+    .status{padding:12px 16px;border-radius:14px;background:var(--offset);
+      border:1px solid var(--line);color:var(--muted)}
     .small{font-size:.85rem;color:var(--muted)}
     .hidden{display:none!important}
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;padding:7px 10px;
-      border-radius:999px;background:var(--offset);color:var(--muted);font-size:.82rem
-    }
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;
+      border-radius:999px;background:var(--offset);color:var(--muted);font-size:.82rem}
     .roll{font-weight:700;color:var(--accent)}
     .header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .error{
-      padding:12px 14px;border-radius:14px;background:#fff0f2;
-      border:1px solid color-mix(in srgb,var(--bad) 25%,var(--line));color:var(--bad)
-    }
-    .divider{
-      display:flex;align-items:center;gap:10px;margin:12px 0;
-      color:var(--muted);font-size:.85rem
-    }
+    .error{padding:12px 14px;border-radius:14px;background:#fff0f2;
+      border:1px solid color-mix(in srgb,var(--bad) 25%,var(--line));color:var(--bad)}
+    .success{padding:12px 14px;border-radius:14px;background:#f0fff4;
+      border:1px solid color-mix(in srgb,var(--good) 25%,var(--line));color:var(--good)}
+    .divider{display:flex;align-items:center;gap:10px;margin:12px 0;
+      color:var(--muted);font-size:.85rem}
     .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--line)}
-    @media (max-width: 980px){
-      .grid{grid-template-columns:1fr}
-      .chat{min-height:60vh}
-      .messages{max-height:none}
-    }
+    @media (max-width:980px){.grid{grid-template-columns:1fr}.chat{min-height:60vh}.messages{max-height:none}}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="wrap">
-    <header class="top">
-      <div class="brand">
-        <div class="logo">D</div>
-        <div>
-          <strong>D&D Campaign Chat</strong>
-          <div class="sub">Valecrest Campaign · Supabase auth</div>
-        </div>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">D</div>
+      <div>
+        <strong>D&amp;D Campaign Chat</strong>
+        <div class="sub">Valecrest Campaign · Supabase auth</div>
       </div>
-      <div class="header-actions">
-        <div class="pill" id="statusPill">Checking session…</div>
-        <button class="btn secondary hidden" id="signOutBtn">Sign out</button>
-      </div>
-    </header>
+    </div>
+    <div class="header-actions">
+      <div class="pill" id="statusPill">Checking session…</div>
+      <button class="btn secondary hidden" id="signOutBtn">Sign out</button>
+    </div>
+  </header>
 
-    <!-- AUTH CARD -->
-    <section class="card" id="authCard">
+  <!-- AUTH CARD -->
+  <section class="card" id="authCard">
+    <div class="inner">
+      <h2>Sign in to join the campaign</h2>
+      <button class="btn google" id="googleBtn" style="width:100%;margin-bottom:4px">
+        <svg width="18" height="18" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Continue with Google
+      </button>
+      <div class="divider">or use email</div>
+      <div class="split" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+        <input id="email" type="email" placeholder="Email" autocomplete="email" />
+        <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
+      </div>
+      <div class="split" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px">
+        <button class="btn" id="signInBtn">Sign in</button>
+        <button class="btn secondary" id="signUpBtn">Create account</button>
+      </div>
+      <div id="authMsg" class="hidden" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- APP GRID -->
+  <section class="grid hidden" id="appGrid">
+    <aside class="card sidebar">
       <div class="inner">
-        <h2>Sign in to join the campaign</h2>
-
-        <!-- Google -->
-        <button class="btn google" id="googleBtn" style="width:100%;margin-bottom:4px">
-          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-          Continue with Google
-        </button>
-
-        <div class="divider">or use email</div>
-
-        <div class="split" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-          <input id="email" type="email" placeholder="Email" autocomplete="email" />
-          <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
-        </div>
-        <div class="split" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px;">
-          <button class="btn" id="signInBtn">Sign in</button>
-          <button class="btn secondary" id="signUpBtn">Create account</button>
-        </div>
-        <div id="authError" class="hidden" style="margin-top:12px"></div>
+        <h2>Active users</h2>
+        <div id="profiles"></div>
+        <div class="status" style="margin-top:12px" id="whoami"></div>
       </div>
-    </section>
+    </aside>
 
-    <!-- APP GRID (shown after login) -->
-    <section class="grid hidden" id="appGrid">
-      <aside class="card sidebar">
-        <div class="inner">
-          <h2>Active users</h2>
-          <div id="profiles"></div>
-          <div class="row" style="margin-top:10px">
-            <input id="newProfileName" placeholder="Add user name" />
-            <button class="btn" id="addProfileBtn">Add user</button>
-          </div>
-          <div class="status" style="margin-top:12px" id="whoami"></div>
+    <main class="card chat">
+      <div class="inner" style="border-bottom:1px solid var(--line)">
+        <h2 id="roomTitle">Room</h2>
+        <div class="small">Room: <strong id="roomCodeLabel"></strong></div>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="composer">
+        <textarea id="messageInput" placeholder="Write a message or /roll 1d20…"></textarea>
+        <button class="btn" id="sendBtn">Send</button>
+      </div>
+      <div class="inner">
+        <div class="tools">
+          <button class="btn secondary" id="rollBtn">🎲 Roll d20</button>
+          <button class="btn secondary" id="rollAdvBtn">⬆ Advantage</button>
+          <button class="btn secondary" id="rollDisBtn">⬇ Disadvantage</button>
         </div>
-      </aside>
+      </div>
+    </main>
 
-      <main class="card chat">
-        <div class="inner" style="border-bottom:1px solid var(--line)">
-          <h2 id="roomTitle">Room</h2>
-          <div class="small">Room: <strong id="roomCodeLabel"></strong></div>
+    <aside class="card hidden" id="adminPanel">
+      <div class="inner">
+        <h2>DM Tools</h2>
+        <label class="small" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:14px">
+          <input type="checkbox" id="aiDmToggle" /> Show AI DM in chat
+        </label>
+        <h3>Edit display name</h3>
+        <div class="row">
+          <input id="editName" placeholder="Display name" />
+          <button class="btn secondary" id="saveProfileBtn">Save name</button>
         </div>
-        <div class="messages" id="messages"></div>
-        <div class="composer">
-          <textarea id="messageInput" placeholder="Write a message or type /roll 1d20"></textarea>
-          <button class="btn" id="sendBtn">Send</button>
-        </div>
-        <div class="inner">
-          <div class="tools">
-            <button class="btn secondary" id="rollBtn">Roll d20</button>
-            <button class="btn secondary" id="rollAdvBtn">Advantage</button>
-            <button class="btn secondary" id="rollDisBtn">Disadvantage</button>
-          </div>
-        </div>
-      </main>
+        <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+        <h3>Map image</h3>
+        <input id="mapImageInput" type="file" accept="image/*" />
+        <button class="btn secondary" id="clearMapBtn" style="margin-top:10px">Remove map</button>
+        <div style="margin-top:12px" id="mapPreviewWrap"></div>
+      </div>
+    </aside>
+  </section>
+</div>
 
-      <aside class="card hidden" id="adminPanel">
-        <div class="inner">
-          <h2>DM tools</h2>
-          <label class="small" style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input type="checkbox" id="aiDmToggle" /> Show AI DM in chat
-          </label>
-          <div class="row" style="margin-top:14px">
-            <input id="inviteName" placeholder="Invite name" />
-            <input id="inviteEmail" placeholder="Invite email" />
-            <button class="btn" id="inviteBtn">Prepare invite</button>
-          </div>
-          <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-          <h3>Edit selected user</h3>
-          <div class="row">
-            <input id="editName" placeholder="User name" />
-            <button class="btn secondary" id="saveProfileBtn">Save name</button>
-          </div>
-          <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-          <h3>Map image</h3>
-          <input id="mapImageInput" type="file" accept="image/*" />
-          <button class="btn secondary" id="clearMapBtn" style="margin-top:10px">Remove map</button>
-          <div style="margin-top:12px" id="mapPreviewWrap"></div>
-        </div>
-      </aside>
-    </section>
-  </div>
+<script>
+  const SUPABASE_URL      = 'https://zvhnqfrnpdoybndlzrer.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2aG5xZnJucGRveWJuZGx6cmVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NzQ3NTgsImV4cCI6MjEwMDI1MDc1OH0.BDYRA_EXduI4_QrkocL2ncwFtqMfmNXMqItOdu_fUG0';
+  const ROOM              = 'valecrest';
+  const ADMIN_EMAILS      = []; // add DM emails here e.g. ['kyle@example.com']
 
-  <script>
-    // ── CONFIG ──────────────────────────────────────────────────────────────
-    const SUPABASE_URL     = 'https://zvhnqfrnpdoybndlzrer.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2aG5xZnJucGRveWJuZGx6cmVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NzQ3NTgsImV4cCI6MjEwMDI1MDc1OH0.BDYRA_EXduI4_QrkocL2ncwFtqMfmNXMqItOdu_fUG0';
-    // ────────────────────────────────────────────────────────────────────────
+  const supabase = window.supabase?.createClient
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
 
-    const supabase = window.supabase?.createClient
-      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-      : null;
+  const state = {
+    user: null, isAdmin: false, aiDmEnabled: false,
+    activeUsers: [], messages: [], mapImage: '',
+    presenceChannel: null, msgChannel: null
+  };
 
-    const state = {
-      user: null,
-      isAdmin: false,
-      aiDmEnabled: false,
-      room: 'valecrest',
-      activeUsers: [],
-      active: 0,
-      messages: [{
-        name: 'AI DM', role: 'dm',
-        text: 'Welcome to Valecrest. Log in to join the session.',
-        me: false
-      }],
-      mapImage: '',
-      presenceChannel: null
-    };
+  const $   = id => document.getElementById(id);
+  const esc = s  => String(s ?? '').replace(/[&<>"']/g,
+    m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-    const $ = id => document.getElementById(id);
-    const esc = s => String(s).replace(/[&<>"']/g, m =>
-      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const showMsg = (msg, type = 'error') => {
+    const el = $('authMsg');
+    if (!msg) { el.className = 'hidden'; el.textContent = ''; return; }
+    el.className = type;
+    el.textContent = msg;
+  };
 
-    const setError = msg => {
-      const el = $('authError');
-      if (!msg) { el.className = 'hidden'; el.textContent = ''; return; }
-      el.className = 'error';
-      el.textContent = msg;
-    };
+  const rollDie  = s => Math.floor(Math.random() * s) + 1;
+  const parseRoll = t => {
+    const m = t.match(/^\/roll\s+(\d*)d(\d+)/i);
+    if (!m) return null;
+    const count = Math.max(1, parseInt(m[1]||'1',10));
+    const sides = parseInt(m[2]||'20',10);
+    const rolls = Array.from({length:count}, ()=>rollDie(sides));
+    return {count,sides,rolls,total:rolls.reduce((a,b)=>a+b,0)};
+  };
 
-    const rollDie = s => Math.floor(Math.random() * s) + 1;
-    const parseRoll = text => {
-      const m = text.match(/^\/roll\s+(\d*)d?(\d+)?/i);
-      if (!m) return null;
-      const count = Math.max(1, parseInt(m[1] || '1', 10));
-      const sides  = parseInt(m[2] || '20', 10);
-      const rolls  = Array.from({length: count}, () => rollDie(sides));
-      return {count, sides, rolls, total: rolls.reduce((a,b)=>a+b,0)};
-    };
+  const checkAdmin = u =>
+    ADMIN_EMAILS.includes(u?.email) || /admin|dm/i.test(u?.email||'');
 
-    const dmActive          = () => state.aiDmEnabled && state.isAdmin;
-    const activeParticipants = () => [
+  // ── RENDER ────────────────────────────────────────────────────────────────
+  const renderUsers = () => {
+    const list = [
       ...state.activeUsers,
-      ...(dmActive() ? [{name:'AI DM', role:'dm'}] : [])
+      ...(state.aiDmEnabled && state.isAdmin ? [{id:'ai-dm',username:'AI DM',role:'dm'}] : [])
     ];
-    const currentUser = () =>
-      state.activeUsers[state.active] || state.activeUsers[0] || null;
+    $('profiles').innerHTML = list.length
+      ? list.map(p=>`
+          <div class="profile ${p.id===state.user?.id?'active':''}">
+            <div><strong>${esc(p.username)}</strong>
+              <div class="small">${p.role==='dm'?'🎲 DM':'online'}</div>
+            </div>
+            <span class="tag ${p.role==='dm'?'admin':''}">
+              ${p.id===state.user?.id?'you':p.role==='dm'?'dm':'player'}
+            </span>
+          </div>`).join('')
+      : `<div class="small">No one is online yet.</div>`;
+  };
 
-    // ── RENDER ───────────────────────────────────────────────────────────────
-    const renderUsers = () => {
-      const users = activeParticipants();
-      $('profiles').innerHTML = users.length
-        ? users.map((p,i) => `
-            <div class="profile ${i===state.active?'active':''}" data-i="${i}">
-              <div>
-                <strong>${esc(p.name)}</strong>
-                <div class="small">${p.role==='dm'?'AI DM':'online'}</div>
-              </div>
-              <span class="tag ${p.role==='dm'?'admin':''}">
-                ${i===state.active?'active':'switch'}
-              </span>
-            </div>`).join('')
-        : `<div class="small">No one is online yet.</div>`;
+  const renderMessages = () => {
+    const el = $('messages');
+    if (!state.messages.length) {
+      el.innerHTML = `<div class="msg dm-msg"><div class="meta">AI DM · DM</div>
+        <div>Welcome to Valecrest. The session begins when everyone is ready.</div></div>`;
+      return;
+    }
+    el.innerHTML = state.messages.map(m => {
+      const isMe = m.speaker_id === state.user?.id;
+      const isDm = m.speaker_role === 'dm';
+      return `<div class="msg ${isMe?'me':''} ${isDm&&!isMe?'dm-msg':''}">
+        <div class="meta">${esc(m.speaker_name)}${isDm?' · DM':''}</div>
+        <div>${m.html||esc(m.body)}</div></div>`;
+    }).join('');
+    el.scrollTop = el.scrollHeight;
+  };
 
-      document.querySelectorAll('.profile').forEach(el => {
-        el.onclick = () => {
-          state.active = +el.dataset.i;
-          const u = currentUser();
-          if (u) $('editName').value = u.name;
-          renderAll();
-        };
-      });
-    };
+  const renderMap = () => {
+    $('mapPreviewWrap').innerHTML = state.mapImage
+      ? `<img class="map-preview" src="${state.mapImage}" alt="Map" />`
+      : `<div class="map-placeholder">No map uploaded yet</div>`;
+  };
 
-    const renderMessages = () => {
-      $('messages').innerHTML = state.messages.map(m => `
-        <div class="msg ${m.me?'me':''}">
-          <div class="meta">${esc(m.name)}${m.role==='dm'?' · DM':''}</div>
-          <div>${m.html || esc(m.text)}</div>
-        </div>`).join('');
-      $('messages').scrollTop = $('messages').scrollHeight;
-    };
+  const renderAll = () => {
+    renderUsers(); renderMessages(); renderMap();
+    const email = state.user?.email||'';
+    $('whoami').textContent       = state.user ? `Signed in: ${email}` : 'Not signed in';
+    $('roomTitle').textContent    = `Room: ${ROOM}`;
+    $('roomCodeLabel').textContent = ROOM;
+    $('statusPill').textContent   = state.user ? (state.isAdmin?`DM · ${email}`:email) : 'Logged out';
+    $('adminPanel').classList.toggle('hidden',  !state.isAdmin);
+    $('appGrid').classList.toggle('hidden',     !state.user);
+    $('authCard').classList.toggle('hidden',    !!state.user);
+    $('signOutBtn').classList.toggle('hidden',  !state.user);
+  };
 
-    const renderMap = () => {
-      $('mapPreviewWrap').innerHTML = state.mapImage
-        ? `<img class="map-preview" src="${state.mapImage}" alt="Campaign map" />`
-        : `<div class="map-placeholder">No map uploaded yet</div>`;
-    };
+  // ── MESSAGES ──────────────────────────────────────────────────────────────
+  const loadMessages = async () => {
+    if (!supabase) return;
+    const {data,error} = await supabase.from('campaign_messages')
+      .select('*').eq('room_code',ROOM).order('created_at',{ascending:true}).limit(100);
+    if (error) { console.error('loadMessages:',error.message); return; }
+    state.messages = data||[];
+    renderMessages();
+  };
 
-    const renderAll = () => {
-      renderUsers();
-      renderMessages();
-      renderMap();
-      const u = currentUser();
-      $('whoami').textContent    = u ? `Active: ${u.name}` : 'No user selected';
-      $('roomTitle').textContent  = `Room: ${state.room}`;
-      $('roomCodeLabel').textContent = state.room;
-      const email = state.user?.email || state.user?.id || '';
-      $('statusPill').textContent = state.user
-        ? (state.isAdmin ? `Admin · ${email}` : email)
-        : 'Logged out';
-      $('adminPanel').classList.toggle('hidden', !state.isAdmin);
-      $('appGrid').classList.toggle('hidden',    !state.user);
-      $('authCard').classList.toggle('hidden',   !!state.user);
-      $('signOutBtn').classList.toggle('hidden', !state.user);
-      if (u) $('editName').value = u.name;
-    };
+  const subscribeMessages = () => {
+    if (!supabase||state.msgChannel) return;
+    state.msgChannel = supabase.channel('msgs-'+ROOM)
+      .on('postgres_changes',{event:'INSERT',schema:'public',
+        table:'campaign_messages',filter:`room_code=eq.${ROOM}`},
+        payload => { state.messages.push(payload.new); renderMessages(); })
+      .subscribe();
+  };
 
-    // ── PRESENCE ─────────────────────────────────────────────────────────────
-    const setupPresence = async user => {
-      if (!supabase) return;
-      if (state.presenceChannel) {
-        await supabase.removeChannel(state.presenceChannel);
-        state.presenceChannel = null;
-      }
+  const sendMessage = async (body, html=null) => {
+    if (!supabase||!state.user) return;
+    const name = state.user.user_metadata?.username
+      || state.user.email?.split('@')[0]||'Player';
+    const {error} = await supabase.from('campaign_messages').insert({
+      room_code:    ROOM,
+      speaker_id:   state.user.id,
+      speaker_name: name,
+      speaker_role: state.isAdmin?'dm':'player',
+      speaker_color:null,
+      body,
+      ...(html?{html}:{})
+    });
+    if (error) console.error('send:',error.message);
+  };
 
-      const ch = supabase.channel('valecrest-presence');
-      ch
-        .on('presence', {event:'sync'}, () => {
-          const raw = ch.presenceState();
-          const seen = new Map();
-          Object.values(raw).flat().forEach(p => {
-            if (p?.user_id && p?.username)
-              seen.set(p.user_id, {user_id:p.user_id, name:p.username, role:p.role||'player'});
-          });
-          state.activeUsers = [...seen.values()];
-          if (state.user && !seen.has(state.user.id)) {
-            state.activeUsers.unshift({
-              user_id: state.user.id,
-              name: state.user.email || 'Me',
-              role: state.isAdmin ? 'dm' : 'player'
-            });
-          }
-          state.active = Math.max(0,
-            state.activeUsers.findIndex(u => u.user_id === state.user?.id));
-          renderAll();
-        })
-        .on('presence', {event:'join'}, () => renderUsers())
-        .on('presence', {event:'leave'}, () => renderUsers());
-
-      await ch.subscribe(async status => {
-        if (status === 'SUBSCRIBED') {
-          await ch.track({
-            user_id:   user.id,
-            username:  user.email || 'User',
-            role:      state.isAdmin ? 'dm' : 'player',
-            online_at: new Date().toISOString()
-          });
-        }
-      });
-
-      state.presenceChannel = ch;
-    };
-
-    // ── SESSION ──────────────────────────────────────────────────────────────
-    const applySession = async session => {
-      if (!session?.user) {
-        state.user = null;
-        state.isAdmin = false;
-        state.activeUsers = [];
-        state.active = 0;
-        if (state.presenceChannel && supabase) {
-          await supabase.removeChannel(state.presenceChannel);
-          state.presenceChannel = null;
-        }
-        renderAll();
-        return;
-      }
-      state.user    = session.user;
-      state.isAdmin = /admin|dm/i.test(session.user.email || '');
-      await upsertProfile(session.user);
-      await setupPresence(session.user);
-      renderAll();
-    };
-
-    const upsertProfile = async user => {
-      if (!supabase) return;
-      const {error} = await supabase.from('profiles').upsert({
+  // ── PRESENCE ──────────────────────────────────────────────────────────────
+  const setupPresence = async user => {
+    if (!supabase) return;
+    if (state.presenceChannel) { await supabase.removeChannel(state.presenceChannel); state.presenceChannel=null; }
+    const ch = supabase.channel('presence-'+ROOM);
+    ch.on('presence',{event:'sync'},()=>{
+        const seen=new Map();
+        Object.values(ch.presenceState()).flat().forEach(p=>{
+          if(p?.user_id&&p?.username)
+            seen.set(p.user_id,{id:p.user_id,username:p.username,role:p.role||'player'});
+        });
+        state.activeUsers=[...seen.values()];
+        renderUsers();
+      })
+      .on('presence',{event:'join'}, ()=>renderUsers())
+      .on('presence',{event:'leave'},()=>renderUsers());
+    await ch.subscribe(async s=>{
+      if(s==='SUBSCRIBED') await ch.track({
         user_id:  user.id,
-        username: user.user_metadata?.username || user.email?.split('@')[0] || 'player',
-        role:     state.isAdmin ? 'dm' : 'player',
-        active:   true
-      }, {onConflict:'user_id'});
-      if (error) console.error('upsert profile:', error.message);
-    };
+        username: user.user_metadata?.username||user.email?.split('@')[0]||'Player',
+        role:     state.isAdmin?'dm':'player',
+        online_at:new Date().toISOString()
+      });
+    });
+    state.presenceChannel=ch;
+  };
 
-    // ── AUTH ─────────────────────────────────────────────────────────────────
-    $('signInBtn').onclick = async () => {
-      if (!supabase) return setError('Supabase not configured.');
-      setError('');
-      const email    = $('email').value.trim();
-      const password = $('password').value.trim();
-      if (!email || !password) return setError('Enter email and password.');
-      const {data, error} = await supabase.auth.signInWithPassword({email, password});
-      if (error) return setError(error.message);
+  // ── PROFILE ───────────────────────────────────────────────────────────────
+  const upsertProfile = async user => {
+    if (!supabase) return;
+    const {error} = await supabase.from('profiles').upsert({
+      id:       user.id,
+      username: user.user_metadata?.username||user.email?.split('@')[0]||'Player'
+    },{onConflict:'id'});
+    if (error) console.error('upsertProfile:',error.message);
+  };
+
+  // ── SESSION ───────────────────────────────────────────────────────────────
+  const applySession = async session => {
+    if (!session?.user) {
+      state.user=null; state.isAdmin=false;
+      state.activeUsers=[]; state.messages=[];
+      if(state.presenceChannel&&supabase){await supabase.removeChannel(state.presenceChannel);state.presenceChannel=null;}
+      if(state.msgChannel&&supabase){await supabase.removeChannel(state.msgChannel);state.msgChannel=null;}
+      renderAll(); return;
+    }
+    state.user    = session.user;
+    state.isAdmin = checkAdmin(session.user);
+    await upsertProfile(session.user);
+    await loadMessages();
+    subscribeMessages();
+    await setupPresence(session.user);
+    renderAll();
+  };
+
+  // ── AUTH ──────────────────────────────────────────────────────────────────
+  $('googleBtn').onclick = async () => {
+    if (!supabase) return showMsg('Supabase not configured.');
+    showMsg('');
+    const {error} = await supabase.auth.signInWithOAuth({
+      provider:'google', options:{redirectTo:window.location.href}
+    });
+    if (error) showMsg(error.message);
+  };
+
+  $('signInBtn').onclick = async () => {
+    if (!supabase) return showMsg('Supabase not configured.');
+    showMsg('');
+    const email=$('email').value.trim(), password=$('password').value.trim();
+    if (!email||!password) return showMsg('Enter email and password.');
+    const {data,error} = await supabase.auth.signInWithPassword({email,password});
+    if (error) return showMsg(error.message);
+    await applySession(data.session);
+  };
+
+  $('signUpBtn').onclick = async () => {
+    if (!supabase) return showMsg('Supabase not configured.');
+    showMsg('');
+    const email=$('email').value.trim(), password=$('password').value.trim();
+    if (!email||!password) return showMsg('Enter email and password.');
+    if (password.length<6) return showMsg('Password must be at least 6 characters.');
+    const {data,error} = await supabase.auth.signUp({email,password});
+    if (error) return showMsg(error.message);
+    if (data.session) {
       await applySession(data.session);
-    };
+    } else {
+      showMsg('Account created! Check your email to confirm, then sign in.','success');
+    }
+  };
 
-    $('signUpBtn').onclick = async () => {
-      if (!supabase) return setError('Supabase not configured.');
-      setError('');
-      const email    = $('email').value.trim();
-      const password = $('password').value.trim();
-      if (!email || !password) return setError('Enter email and password.');
-      const {data, error} = await supabase.auth.signUp({email, password});
-      if (error) return setError(error.message
+  $('signOutBtn').onclick = async () => {
+    if (supabase) await supabase.auth.signOut();
+    await applySession(null);
+  };
+
+  // ── SEND ──────────────────────────────────────────────────────────────────
+  const doSend = async () => {
+    const raw=$('messageInput').value.trim();
+    if (!raw) return;
+    $('messageInput').value='';
+    const roll=parseRoll(raw);
+    if (roll) {
+      await sendMessage(`/roll ${roll.count}d${roll.sides}`,
+        `🎲 <span class="roll">${roll.count}d${roll.sides}</span>: [${roll.rolls.join(', ')}] → <span class="roll">${roll.total}</span>`);
+      return;
+    }
+    await sendMessage(raw);
+  };
+
+  $('sendBtn').onclick = doSend;
+  $('messageInput').addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();doSend();}
+  });
+
+  // ── DICE BUTTONS ──────────────────────────────────────────────────────────
+  const quickRoll = async (label,fn) => {
+    const rolls=fn(), total=rolls.reduce((a,b)=>a+b,0);
+    await sendMessage(label,
+      `🎲 <span class="roll">${label}</span>: [${rolls.join(', ')}] → <span class="roll">${total}</span>`);
+  };
+  $('rollBtn').onclick    = ()=>quickRoll('d20',          ()=>[rollDie(20)]);
+  $('rollAdvBtn').onclick = ()=>quickRoll('d20 Advantage',()=>[rollDie(20),rollDie(20)]);
+  $('rollDisBtn').onclick = ()=>quickRoll('d20 Disadvantage',()=>[rollDie(20),rollDie(20)]);
+
+  // ── ADMIN ─────────────────────────────────────────────────────────────────
+  $('aiDmToggle').onchange = ()=>{ state.aiDmEnabled=$('aiDmToggle').checked; renderUsers(); };
+
+  $('saveProfileBtn').onclick = async ()=>{
+    const name=$('editName').value.trim();
+    if(!name||!supabase||!state.user) return;
+    await supabase.from('profiles').update({username:name}).eq('id',state.user.id);
+    await supabase.auth.updateUser({data:{username:name}});
+    if(state.presenceChannel) await state.presenceChannel.track({
+      user_id:state.user.id,username:name,
+      role:state.isAdmin?'dm':'player',online_at:new Date().toISOString()
+    });
+  };
+
+  $('mapImageInput').onchange = e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const r=new FileReader();
+    r.onload=ev=>{state.mapImage=ev.target.result;renderMap();};
+    r.readAsDataURL(file);
+  };
+  $('clearMapBtn').onclick = ()=>{ state.mapImage='';$('mapImageInput').value='';renderMap(); };
+
+  // ── BOOT ──────────────────────────────────────────────────────────────────
+  (async()=>{
+    if (!supabase) { $('statusPill').textContent='Supabase not loaded'; renderAll(); return; }
+    const {data:{session}} = await supabase.auth.getSession();
+    if (session) await applySession(session);
+    else { $('statusPill').textContent='Not signed in'; renderAll(); }
+    supabase.auth.onAuthStateChange(async(_,s)=>await applySession(s));
+  })();
+</script>
+</body>
+</html>
