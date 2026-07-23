@@ -566,7 +566,7 @@
   };
 
   // ── CHARACTERS: DATA ──────────────────────────────────────────────────────
-  const loadCharacters = async () => {
+  const loadCampaignSettings = async () => { if (!sb) return; const {data,error} = await sb.from('campaign_settings').select('*').eq('room_code',ROOM).maybeSingle(); if (error) { console.error('loadCampaignSettings:',error.message); return; } state.campaignSettings = data || {campaign_name:'Untitled Campaign', ai_dm_context:''}; renderCampaignSettings(); }; const renderCampaignSettings = () => { const cs = state.campaignSettings || {campaign_name:'Untitled Campaign', ai_dm_context:''}; $('campaignSub').textContent = `${cs.campaign_name} · Room: ${ROOM}`; $('campaignNameInput').value = cs.campaign_name || ''; $('aiDmContextInput').value = cs.ai_dm_context || ''; }; const saveCampaignSettings = async () => { if (!sb||!state.isAdmin) return; const campaign_name = $('campaignNameInput').value.trim() || 'Untitled Campaign'; const ai_dm_context = $('aiDmContextInput').value.trim(); const {error} = await sb.from('campaign_settings').upsert({room_code: ROOM, campaign_name, ai_dm_context, updated_at: new Date().toISOString()},{onConflict:'room_code'}); if (error) { console.error('saveCampaignSettings:',error.message); return; } state.campaignSettings = {campaign_name, ai_dm_context}; renderCampaignSettings(); renderMessages(); }; const loadCharacters = async () => {
     if (!sb||!state.user) return;
     const {data,error} = await sb.from('characters')
       .select('*').eq('user_id',state.user.id).order('created_at',{ascending:true});
