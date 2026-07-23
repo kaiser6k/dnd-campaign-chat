@@ -180,7 +180,8 @@
   const SUPABASE_URL = "https://zvhnqfrnpdoybndlzrer.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_3XNsYKM6UXqLxxGRoHtl-Q_0e6SSIJN";
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ✅ CORRECT — use window.supabase from the CDN script
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     : null;
 
