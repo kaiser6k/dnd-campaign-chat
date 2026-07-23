@@ -104,7 +104,7 @@
       <div class="logo">D</div>
       <div>
         <strong>D&amp;D Campaign Chat</strong>
-        <div class="sub">Valecrest Campaign · Supabase auth</div>
+        <div class="sub" id="campaignSub">Loading campaign…</div>
       </div>
     </div>
     <div class="header-actions">
@@ -176,7 +176,7 @@
         <label class="small" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:14px">
           <input type="checkbox" id="aiDmToggle" /> Show AI DM in chat
         </label>
-        <h3>Edit display name</h3>
+        <h3>Campaign settings</h3><div class="row"><input id="campaignNameInput" placeholder="Campaign name" /><textarea id="aiDmContextInput" placeholder="Optional: extra context for the AI DM"></textarea><button class="btn secondary" id="saveCampaignBtn">Save campaign settings</button></div><hr style="border:none;border-top:1px solid var(--line);margin:14px 0"><h3>Edit display name</h3>
         <div class="row">
           <input id="editName" placeholder="Display name" />
           <button class="btn secondary" id="saveProfileBtn">Save name</button>
@@ -359,7 +359,7 @@
     user: null, isAdmin: false, aiDmEnabled: false,
     activeUsers: [], messages: [], mapImage: '',
     presenceChannel: null, msgChannel: null,
-    myCharacters: [], allCharacters: [], allProfiles: [],
+    myCharacters: [], allCharacters: [], allProfiles: [], campaignSettings: null,
     view: 'chat'
   };
 
@@ -417,7 +417,7 @@
     const el = $('messages');
     if (!state.messages.length) {
       el.innerHTML = `<div class="msg dm-msg"><div class="meta">AI DM · DM</div>
-        <div>Welcome to Valecrest. The session begins when everyone is ready.</div></div>`;
+        <div>Welcome to ${esc(state.campaignSettings?.campaign_name || 'the campaign')}. The session begins when everyone is ready.</div></div>`;
       return;
     }
     el.innerHTML = state.messages.map(m => {
@@ -886,7 +886,7 @@
   $('rollDisBtn').onclick = ()=>quickRoll('d20 Disadvantage',()=>[rollDie(20),rollDie(20)]);
 
   // ── ADMIN ─────────────────────────────────────────────────────────────────
-  $('aiDmToggle').onchange = ()=>{ state.aiDmEnabled=$('aiDmToggle').checked; renderAll(); }; const askAiDm = async () => { if (!state.aiDmEnabled || !sb || !state.user) return; const {data:{session}} = await sb.auth.getSession(); if (!session) return; const btn = $('askAiDmBtn'); btn.disabled = true; const original = btn.textContent; btn.textContent = 'The DM is thinking…'; try { const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-dm`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({room_code: ROOM}) }); if (!res.ok) console.error('AI DM error:', await res.text()); } catch (e) { console.error('AI DM request failed:', e); } finally { btn.disabled = false; btn.textContent = original; } }; $('askAiDmBtn').onclick = askAiDm;
+  $('aiDmToggle').onchange = ()=>{ state.aiDmEnabled=$('aiDmToggle').checked; renderAll(); }; $('saveCampaignBtn').onclick = saveCampaignSettings; const askAiDm = async () => { if (!state.aiDmEnabled || !sb || !state.user) return; const {data:{session}} = await sb.auth.getSession(); if (!session) return; const btn = $('askAiDmBtn'); btn.disabled = true; const original = btn.textContent; btn.textContent = 'The DM is thinking…'; try { const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-dm`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({room_code: ROOM}) }); if (!res.ok) console.error('AI DM error:', await res.text()); } catch (e) { console.error('AI DM request failed:', e); } finally { btn.disabled = false; btn.textContent = original; } }; $('askAiDmBtn').onclick = askAiDm;
 
   $('saveProfileBtn').onclick = async ()=>{
     const name=$('editName').value.trim();
@@ -953,7 +953,7 @@
 
   // ── BOOT ──────────────────────────────────────────────────────────────────
   (async()=>{
-    if (!sb) { $('statusPill').textContent='Supabase not loaded'; renderAll(); return; }
+    if (!sb) { $('statusPill').textContent='Supabase not loaded'; renderAll(); return; } await loadCampaignSettings();
     const {data:{session}} = await sb.auth.getSession();
     if (session) await applySession(session);
     else { $('statusPill').textContent='Not signed in'; renderAll(); }
