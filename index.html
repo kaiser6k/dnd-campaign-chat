@@ -177,13 +177,11 @@
 </div>
 
 <script>
-  const SUPABASE_URL      = 'https://zvhnqfrnpdoybndlzrer.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2aG5xZnJucGRveWJuZGx6cmVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NzQ3NTgsImV4cCI6MjEwMDI1MDc1OH0.BDYRA_EXduI4_QrkocL2ncwFtqMfmNXMqItOdu_fUG0';
-  const ROOM              = 'valecrest';
-  const ADMIN_EMAILS      = []; // add DM emails here e.g. ['kyle@example.com']
+  const SUPABASE_URL = "https://zvhnqfrnpdoybndlzrer.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_3XNsYKM6UXqLxxGRoHtl-Q_0e6SSIJN";
 
-  const supabase = window.supabase?.createClient
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     : null;
 
   const state = {
